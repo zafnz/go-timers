@@ -2,6 +2,8 @@ package timers
 
 import (
 	"context"
+	"encoding/json"
+	"math"
 	"strings"
 	"testing"
 	"time"
@@ -9,14 +11,13 @@ import (
 
 func TestGet(t *testing.T) {
 	timers := newSet()
-	x := timers.New("Testing").Start()
+	x := timers.New("Testing").Start().nap()
 	if timers.Get("Testing") == nil {
 		t.Fatal("Failed to find created timer")
 	}
 	if x.IsRunning() == false {
 		t.Error("Running timer isn't running")
 	}
-	time.Sleep(1 * time.Microsecond)
 	timers.Get("Testing").Stop()
 	if x.Duration() == 0 {
 		t.Error("Failed to measure time passing")
@@ -67,27 +68,28 @@ func TestRunning(t *testing.T) {
 	}
 }
 
-/*
-func inSlice(s []string, n string) bool {
-	for _, x := range s {
-		if x == n {
-			return true
+func TestWrap(t *testing.T) {
+	ctx, _ := NewContext(context.Background(), "base")
+	Get(ctx).Wrap("Wrapped", func(c context.Context) {
+		if c == ctx {
+			t.Fatal("Identical context given to wrapped function")
 		}
+		if GetFromContext(c) == nil {
+			t.Fatal("No TimerSet in new context")
+		}
+		time.Sleep(1 * time.Millisecond)
+	})
+	timer := Get(ctx).Get("Wrapped")
+	if timer == nil {
+		t.Fatal("Wrap didn't create a wrapper timer in parent")
 	}
-	return false
+	if timer.IsRunning() == true {
+		t.Error("Wrap didn't stop timer")
+	}
+	if timer.Duration() == 0 {
+		t.Error("Wrap didn't run timer")
+	}
 }
-
-func TestTags(t *testing.T) {
-	s := NewSet()
-	x := s.New("TagTest").Tag("A").Tag("B")
-	tags := x.Tags()
-	if len(tags) != 2 {
-		t.Errorf("Have wrong number of tags (want 2, got %d)", len(tags))
-	}
-	if !inSlice(tags, "A") || !inSlice(tags, "B") {
-		t.Error("Missing a tag")
-	}
-}*/
 
 func TestNoContext(t *testing.T) {
 	if Get(context.Background()) == nil {
@@ -103,51 +105,195 @@ func TestContext(t *testing.T) {
 	if GetFromContext(context.Background()) != nil {
 		t.Error("Got a context from the background!?")
 	}
-	func(ctx context.Context) {
-		defer Get(ctx).New("Test").Start().Stop()
-		time.Sleep(100 * time.Microsecond)
-		ctx, fn := context.WithCancel(ctx)
-		Get(ctx).New("Deeper").Start().Stop()
-		fn()
-	}(ctx)
+}
+func TestContextInheritence(t *testing.T) {
+	ctx, _ := NewContext(context.Background(), "")
+
+	Get(ctx).New("Test").Start().nap().Stop()
+	deeperCtx, fn := context.WithCancel(ctx)
+	Get(deeperCtx).New("Deeper").Start().nap().Stop()
+	fn()
+
 	if Get(ctx).Get("Test").Duration() < 100*time.Microsecond {
-		t.Error("Time travel is impossible!")
+		t.Fatal("Time travel is impossible -- I hope!")
 	}
 	if Get(ctx).Get("Deeper") == nil {
 		t.Error("Timer lost in creation of new context from existing")
 	}
-	// Created a duplicate name
-	Get(ctx).New("Test").Tag("blah")
-	if len(Get(ctx).Get("Test").Tags()) != 0 {
-		t.Error("Did not get first timer of duplicate name back")
+}
+func TestDuplicateNames(t *testing.T) {
+	set := newSet()
+	t1 := set.New("timer")
+	t2 := set.New("timer")
+	t3 := set.Get("timer")
+	if t3 != t1 {
+		t.Error("Did not get the first duplicate")
 	}
-	timers := Get(ctx).All()
-	if len(timers) != 3 {
-		t.Error("Incorrect number of timers returned.")
+	for _, i := range set.timers {
+		if i == t2 {
+			return
+		}
 	}
-
+	t.Error("Second duplicate not in timer list")
 }
 
-/*
-func TestSubtimers(t *testing.T) {
-	ctx := context.Background()
-	ctx, _ = NewContext(ctx, "")
-	x := Get(ctx).New("Step 1").Start()
-	time.Sleep(1 * time.Millisecond)
-	subTest(ctx)
-	x.Stop()
-	Get(ctx).New("Step 2").Start().Stop()
-	subTest(ctx)
-	Get(ctx).New("Step 3").Start()
-	subTest(ctx)
+func TestCopy(t *testing.T) {
+	set := newSet()
+	t1 := set.New("t1")
+	t2 := set.New("t2")
+	t1.duration = 10
+	t2.duration = 20
 
-	Get(ctx).Tree(func(timer Timer, depth int) {
-		t.Logf("%s %s", strings.Repeat(" ", depth), timer.String())
+	all := set.All()
+	// order should be preserved
+	if all[0].duration != 10 && all[1].duration != 20 {
+		t.Error("All() did not produce an identical copy")
+	}
+	if len(t1.Tags()) != 0 {
+		t.Error("Where did that tag come from?")
+	}
+}
+
+func TestCompare(t *testing.T) {
+	t1 := newSet().New("blah")
+	t2 := newSet().New("blah")
+	t3 := newSet().New("blah").Start().Stop()
+	if !t1.Compare(t2) {
+		t.Error("Identical timers didn't compare correctly")
+	}
+	if t1.Compare(t3) {
+		t.Error("Differening timers compared equal")
+	}
+}
+
+const jsonBasicTimer = `{
+	"name": "blah",
+	"start": 1644884400000,
+	"duration": 69000
+}`
+
+func TestTimerUnmarsha(t *testing.T) {
+	var timer Timer
+	err := json.Unmarshal([]byte(jsonBasicTimer), &timer)
+	if err != nil {
+		t.Fatal("Failed to unmarshal")
+	}
+	if timer.name != "blah" {
+		t.Error("Failed to parse name")
+	}
+	if timer.duration.Seconds() != 69 {
+		t.Error("Not nice")
+	}
+}
+func TestTimerMarshal(t *testing.T) {
+	t1 := newSet().New("Blah").Start().nap().Stop()
+	bytes, err := json.Marshal(t1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(bytes))
+	if strings.Contains(string(bytes), "children") {
+		t.Error("Timer with no children exported with children property")
+	}
+	// marshalling is lossy (saved in milliseconds)
+	// so round t1 too.
+	t1.start = time.UnixMilli(t1.start.UnixMilli())
+	// Convert to milliseconds rounded to 3 decimal places (just like the marshall)
+	ms := math.Round(float64(t1.duration)/float64(time.Millisecond)*1000) / 1000
+	t1.duration = time.Duration(ms * float64(time.Millisecond))
+	var t2 Timer
+	err = json.Unmarshal(bytes, &t2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !t1.Compare(&t2) {
+		t.Error("Marshalling and Unmarshalling didn't match")
+	}
+
+	t3 := newSet().New("Blah")
+	bytes, err = json.Marshal(t3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(bytes))
+	err = json.Unmarshal(bytes, t3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !t3.start.IsZero() {
+		t.Error("Unstarted timer did not marshall correctly")
+	}
+}
+
+func TestSetMarshalling(t *testing.T) {
+	set1 := newSet()
+	set1.New("t1").Start().nap().Stop()
+	set1.New("t2").Start().nap().Stop()
+	set1.New("t3").Start().nap().Stop()
+	set1.New("t4").Start().nap().Stop()
+	set1.New("t5").Start().nap().Stop()
+	bytes, err := json.Marshal(set1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(string(bytes), "\"t3\"") {
+		t.Fatal("Marshall of set didn't contain all timers")
+	}
+	var set2 TimerSet
+	err = json.Unmarshal(bytes, &set2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(set2.All()) != 5 {
+		t.Error("Did not unmarshall all timers")
+	}
+}
+
+func TestTreeMarshalling(t *testing.T) {
+	depth0, _ := NewContext(context.Background(), "depth0")
+	Get(depth0).New("t0.0").Start().nap().Stop()
+	depth1, _ := NewContext(depth0, "depth1")
+	Get(depth1).New("t1.0").Start().nap().Stop()
+	depth2, _ := NewContext(depth1, "depth2")
+	Get(depth2).New("t2.0").Start().nap().Stop()
+	Get(depth2).New("t2.1").Start().nap().Stop()
+	depth3, _ := NewContext(depth2, "depth3")
+	Get(depth3).New("3.0").Start().nap().Stop()
+	Get(depth3).New("3.1").Start().nap().Stop().Tag("tag3.1")
+	t32 := Get(depth3).New("3.2").Start().nap().Stop().Tag("3.2")
+
+	t.Log("Tree")
+	Get(depth0).Tree(func(timer Timer, depth int, _ *TimerSet) {
+		t.Logf("%s %s\n", strings.Repeat(" ", depth), timer.String())
 	})
-	t.Error("boop")
-}
 
-func TestWalk(t *testing.T) {
+	bytes, err := json.MarshalIndent(Get(depth0), "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(bytes))
+	if !strings.Contains(string(bytes), "3.1") {
+		t.Error("Marshalling all timers did not reveal a deep one")
+	}
 
+	var set TimerSet
+
+	err = json.Unmarshal(bytes, &set)
+	if err != nil {
+		t.Fatal("Failed to unmarshal timer tree")
+	}
+	for _, timer := range set.AllDeep() {
+		if timer.name == "3.2" && timer.duration.Milliseconds() == t32.duration.Milliseconds() {
+			t.Log(timer)
+			if len(timer.Tags()) != 1 {
+				t.Fatalf("Timer didn't have tag %d", len(timer.Tags()))
+			}
+			if timer.Tags()[0] != "3.2" {
+				t.Fatalf("Timer had wrong tag '%s'", timer.Tags()[0])
+			}
+			return
+		}
+	}
+	t.Error("Did not discover timer 3.1")
 }
-*/

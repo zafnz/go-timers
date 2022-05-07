@@ -68,7 +68,7 @@ func main() {
 		fmt.Println(t)
 	}
 	fmt.Println("\n\nAs a tree")
-	timers.Get(ctx).Tree(func(timer timers.Timer, depth int) {
+	timers.Get(ctx).Tree(func(timer timers.Timer, depth int, _ *timers.TimerSet) {
 		fmt.Printf("%s %s\n", strings.Repeat(" ", depth), timer.String())
 	})
 }
