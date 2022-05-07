@@ -13,19 +13,19 @@ import (
 func TestGet(t *testing.T) {
 	timers := newSet()
 	x := timers.New("Testing").Start().nap()
-	if timers.Get("Testing") == nil {
+	if timers.Find("Testing") == nil {
 		t.Fatal("Failed to find created timer")
 	}
 	if x.IsRunning() == false {
 		t.Error("Running timer isn't running")
 	}
-	timers.Get("Testing").Stop()
+	timers.Find("Testing").Stop()
 	if x.Duration() == 0 {
 		t.Error("Failed to measure time passing")
 	}
 
-	if timers.Get("missing") != nil {
-		t.Error("Get of a missing timer didn't return nil")
+	if timers.Find("missing") != nil {
+		t.Error("Find of a missing timer didn't return nil")
 	}
 }
 func TestRunning(t *testing.T) {
@@ -80,7 +80,7 @@ func TestWrap(t *testing.T) {
 		}
 		time.Sleep(1 * time.Millisecond)
 	})
-	timer := Get(ctx).Get("Wrapped")
+	timer := Get(ctx).Find("Wrapped")
 	if timer == nil {
 		t.Fatal("Wrap didn't create a wrapper timer in parent")
 	}
@@ -115,10 +115,10 @@ func TestContextInheritence(t *testing.T) {
 	Get(deeperCtx).New("Deeper").Start().nap().Stop()
 	fn()
 
-	if Get(ctx).Get("Test").Duration() < 100*time.Microsecond {
+	if Get(ctx).Find("Test").Duration() < 100*time.Microsecond {
 		t.Fatal("Time travel is impossible -- I hope!")
 	}
-	if Get(ctx).Get("Deeper") == nil {
+	if Get(ctx).Find("Deeper") == nil {
 		t.Error("Timer lost in creation of new context from existing")
 	}
 }
@@ -126,7 +126,7 @@ func TestDuplicateNames(t *testing.T) {
 	set := newSet()
 	t1 := set.New("timer")
 	t2 := set.New("timer")
-	t3 := set.Get("timer")
+	t3 := set.Find("timer")
 	if t3 != t1 {
 		t.Error("Did not get the first duplicate")
 	}

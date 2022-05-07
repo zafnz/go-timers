@@ -198,7 +198,7 @@ func (s *TimerSet) New(name string, a ...interface{}) *Timer {
 
 // Retrives the first timer with the provided name
 // (Names do not have to be unique)
-func (s *TimerSet) Get(name string) *Timer {
+func (s *TimerSet) Find(name string) *Timer {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for _, t := range s.timers {
@@ -258,6 +258,14 @@ func (t *Timer) Tags() []string {
 	tags := make([]string, len(t.tags))
 	copy(tags, t.tags)
 	return tags
+}
+
+// Returns a _copy_ of the timers under this timer, if any. Returns empty list otherwise.
+func (t *Timer) Children() []Timer {
+	if t.subtimer == nil {
+		return []Timer{}
+	}
+	return t.subtimer.All()
 }
 
 // Returns a string representing the timer's current state
