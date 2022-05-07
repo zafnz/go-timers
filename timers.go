@@ -1,3 +1,14 @@
+// Copyright 2022 Nick Clifford <zaf@crypto.geek.nz>
+
+/*
+This package timers provides useful timers for measuring code paths in a production type
+environment. While pprof may be considered an overkill or disadventagous for use
+in production systems, this code is designed to be lightweight and produce useful
+output.
+
+It's original purpose was to aid in providing latency timings for downstream API
+calls for an API service. With strategic timers placed around and use of middleware
+performance timers for services can be provided. */
 package timers
 
 import (
@@ -11,12 +22,20 @@ import (
 	"time"
 )
 
+// A TimerSet is the list of timers inside a Context. The TimerSet provides a collection
+// of functions to create, retrieve, and export timers. Creation of a TimerSet is done with
+// the NewContext function.
 type TimerSet struct {
 	mu     sync.Mutex
 	timers []*Timer
-	ctx    context.Context
 }
 
+// An individual timer is used to measure, well, time elapsed, and is stored in a timerset.
+// This type provides different functionality from a traditional time.Timer, as it has an
+// interface designed to be quick and easy to instrument functions and code blocks.
+//
+// To get a Timer, you call New from a TimerSet, retrieved from the context:
+//  timer.Get(ctx).New("Blah")
 type Timer struct {
 	name     string
 	start    time.Time
@@ -27,6 +46,20 @@ type Timer struct {
 
 type timerctx string
 
+// Returns a context containing a new TimerSet. If the existing supplied context includes a
+// TimerSet, then a timer is added to that with the name "Subtimer" to keep the timer tree.
+// If you want to control the name of the parent timer, use NewContextWithTimer, if you
+// do not want a timer at all, use context.Background(), or simply create a TimerSet empty
+// struct that will not be attached to the current context.
+func NewContext(ctx context.Context) context.Context {
+	existingSet := Get(ctx)
+	newSet := &TimerSet{}
+	ctx = context.WithValue(ctx, timerctx("timers"), newSet)
+	t := existingSet.New("Subtimer")
+	t.subtimer = newSet
+	return ctx
+}
+
 // Returns a new context with a new TimerSet attached to it, and a timer attached to the previous
 // context (if any). If the previous context did not have a TimerSet, then the timer is a floating
 // timer (but safe to use). The timer name string can be a formatted string (just like fmt.Printf)
@@ -34,24 +67,10 @@ type timerctx string
 // TimerSets are threadsafe, you can create new timers across threads using the same TimerSet,
 // however the Timers themselves are not. Don't manipulate the same Timer in different go routines
 // at the same time. You're probably doing it wrong if you find yourself wanting to.
-//
-// Example:
-//     // Create a context to use for timings.
-//     ctx, _ := timers.NewContext(context.Background(), "")
-//
-//     // Create a new TimerSet for grouping timers.
-//     newCtx, t := timers.NewContext(ctx, "group")
-//     t.Start()
-//     goDoSomeWork(newCtx)
-//     t.Stop()
-//     workTimers := timers.Get(newCtx)
-//     fmt.Printf("Work took %d ms and produced %d timers", t.Duration(), len(workTimers))
-//
-func NewContext(ctx context.Context, name string, a ...interface{}) (context.Context, *Timer) {
+func NewContextWithTimer(ctx context.Context, name string, a ...interface{}) (context.Context, *Timer) {
 	existingSet := Get(ctx)
 	newSet := &TimerSet{}
 	ctx = context.WithValue(ctx, timerctx("timers"), newSet)
-	newSet.ctx = ctx
 	t := existingSet.New(name, a...)
 	t.subtimer = newSet
 	return ctx, t
@@ -61,8 +80,7 @@ func NewContext(ctx context.Context, name string, a ...interface{}) (context.Con
 // TimerSet that will be garbage collected. This ensures that chaining is always possible.
 //
 // Example:
-//
-//     t := timers.Get(ctx).New("blah")
+//  t := timers.Get(ctx).New("blah")
 //
 // Regardless of whether there is a timer set in the current context, you will get back a
 // working timer you can use.
@@ -76,7 +94,7 @@ func Get(ctx context.Context) *TimerSet {
 
 // Internal function to create a new timer from context.Background()
 func newSet() *TimerSet {
-	return &(TimerSet{ctx: context.Background()})
+	return &(TimerSet{})
 }
 
 // Get TimerSet from provided context (if any), otherwise return nil.
@@ -155,20 +173,13 @@ func (s *TimerSet) walkTree(p *TimerSet, depth int, fn func(Timer, int, *TimerSe
 // e.g. In the example below, a new Main context is created, and it will have 2 timers, Stuff and
 // Some Work. The "Some Work" timer will have 3 sub timers under it.
 //
-//    ctx, _ := timers.NewContext(ctx.Background(), "Main")
-//    timers.Get(ctx).New("Stuff").Start().Stop()
-//    timers.Get(ctx).Wrap("Some Work", func(ctx context.Context) {
-//	      timers.Get(ctx).New("work step 1").Start().Stop()
-//	      timers.Get(ctx).New("work step 2").Start().Stop()
-//	      timers.Get(ctx).New("work step 3").Start().Stop()
-//    })
-func (s *TimerSet) Wrap(name string, fn func(context.Context)) {
+func (s *TimerSet) Wrap(ctx context.Context, name string, fn func(context.Context)) {
 	t := s.New(name)
 	ns := &TimerSet{}
-	ctx := context.WithValue(s.ctx, timerctx("timers"), ns)
+	newCtx := context.WithValue(ctx, timerctx("timers"), ns)
 	t.subtimer = ns
 	t.Start()
-	fn(ctx)
+	fn(newCtx)
 	t.Stop()
 }
 
@@ -264,6 +275,9 @@ func (t Timer) String() string {
 	}
 }
 
+// Compares the provided timer with this timer and returns true or false on whether they are equivilent.
+// (Note: The timers have nanosecond resolution, so this function really is "is this the exact same
+// timer?")
 func (t *Timer) Compare(t2 *Timer) bool {
 	if t.name == t2.name && t.start == t2.start && t.duration == t2.duration {
 		return true
@@ -304,6 +318,11 @@ func (s *TimerSet) toMarshalTimers() []marshalTimer {
 	return timers
 }
 
+// Given a list of timers, turns it back into a TimerSet
+// Be aware that the TimerSet will be lacking any context
+// and will not be able to be associated to a context.
+// You have essentially just imported a block of floating
+// timers
 func (s *TimerSet) UnmarshalJSON(bytes []byte) error {
 	// We are given a list of Timers, hopefully.
 	s.mu.Lock()

@@ -21,16 +21,15 @@ func otherMajorWork(ctx context.Context, wg *sync.WaitGroup) {
 func moreMajorWork(ctx context.Context) {
 	fmt.Println("more major work starting")
 	time.Sleep(time.Duration(rand.Intn(1000) * int(time.Millisecond)))
-	timers.Get(ctx).Wrap("subwork", func(ctx context.Context) {
+	timers.Get(ctx).Wrap(ctx, "subwork", func(ctx context.Context) {
 		fmt.Println("Subwork going on")
 		time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
 		fmt.Println("subwork finished")
 	})
 	fmt.Println("more major work finished")
-
 }
 func main() {
-	ctx, _ := timers.NewContext(context.Background(), "main")
+	ctx := timers.NewContext(context.Background())
 	// do things
 	func() {
 		defer timers.Get(ctx).New("Measure Sleep").Start().Stop()
@@ -43,14 +42,14 @@ func main() {
 	t.Stop()
 
 	func() {
-		ctx, t := timers.NewContext(ctx, "All major work")
+		ctx, t := timers.NewContextWithTimer(ctx, "All major work")
 		t.Start()
 		defer t.Stop()
 
 		wg := sync.WaitGroup{}
 		for i := 0; i < 2; i++ {
 			wg.Add(1)
-			go timers.Get(ctx).Wrap("majorWork", func(ctx context.Context) {
+			go timers.Get(ctx).Wrap(ctx, "majorWork", func(ctx context.Context) {
 				otherMajorWork(ctx, &wg)
 			})
 		}
@@ -58,7 +57,7 @@ func main() {
 		fmt.Println("All major work complete")
 	}()
 
-	workCtx, t := timers.NewContext(ctx, "More work")
+	workCtx, t := timers.NewContextWithTimer(ctx, "More work")
 	t.Start()
 	moreMajorWork(workCtx)
 	t.Stop()

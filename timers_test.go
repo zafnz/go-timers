@@ -1,3 +1,4 @@
+// Unit tests for timers code. Extensive
 package timers
 
 import (
@@ -69,8 +70,8 @@ func TestRunning(t *testing.T) {
 }
 
 func TestWrap(t *testing.T) {
-	ctx, _ := NewContext(context.Background(), "base")
-	Get(ctx).Wrap("Wrapped", func(c context.Context) {
+	ctx := NewContext(context.Background())
+	Get(ctx).Wrap(ctx, "Wrapped", func(c context.Context) {
 		if c == ctx {
 			t.Fatal("Identical context given to wrapped function")
 		}
@@ -98,7 +99,7 @@ func TestNoContext(t *testing.T) {
 }
 func TestContext(t *testing.T) {
 	ctx := context.Background()
-	ctx, _ = NewContext(ctx, "")
+	ctx = NewContext(ctx)
 	if GetFromContext(ctx) == nil {
 		t.Error("Failed to get timer in current context")
 	}
@@ -107,7 +108,7 @@ func TestContext(t *testing.T) {
 	}
 }
 func TestContextInheritence(t *testing.T) {
-	ctx, _ := NewContext(context.Background(), "")
+	ctx := NewContext(context.Background())
 
 	Get(ctx).New("Test").Start().nap().Stop()
 	deeperCtx, fn := context.WithCancel(ctx)
@@ -251,14 +252,14 @@ func TestSetMarshalling(t *testing.T) {
 }
 
 func TestTreeMarshalling(t *testing.T) {
-	depth0, _ := NewContext(context.Background(), "depth0")
+	depth0, _ := NewContextWithTimer(context.Background(), "depth0")
 	Get(depth0).New("t0.0").Start().nap().Stop()
-	depth1, _ := NewContext(depth0, "depth1")
+	depth1, _ := NewContextWithTimer(depth0, "depth1")
 	Get(depth1).New("t1.0").Start().nap().Stop()
-	depth2, _ := NewContext(depth1, "depth2")
+	depth2, _ := NewContextWithTimer(depth1, "depth2")
 	Get(depth2).New("t2.0").Start().nap().Stop()
 	Get(depth2).New("t2.1").Start().nap().Stop()
-	depth3, _ := NewContext(depth2, "depth3")
+	depth3, _ := NewContextWithTimer(depth2, "depth3")
 	Get(depth3).New("3.0").Start().nap().Stop()
 	Get(depth3).New("3.1").Start().nap().Stop().Tag("tag3.1")
 	t32 := Get(depth3).New("3.2").Start().nap().Stop().Tag("3.2")
