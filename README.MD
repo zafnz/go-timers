@@ -1,5 +1,6 @@
 # zafnz/go-timers
 [![GoDoc](https://godoc.org/github.com/zafnz/go-timers?status.svg)](https://godoc.org/github.com/zafnz/go-timers)
+[![CI](https://github.com/zafnz/go-timers/actions/workflows/main.yml/badge.svg)](https://github.com/zafnz/go-timers/actions/workflows/main.yml)
 
 `go-timers` is a library to assist with timing various code blocks in go in such a way that the values can be 
 inspected later, in runtime, without invoking a debugger.
