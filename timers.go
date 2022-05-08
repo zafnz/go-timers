@@ -15,7 +15,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math"
 	"math/rand"
 	"strings"
 	"sync"
@@ -241,6 +240,15 @@ func (t *Timer) Duration() time.Duration {
 	}
 }
 
+// Returns the duration the timer ran for or has been running in milliseconds, as a float rounded
+// to 3 decimal places.
+func (t *Timer) Milliseconds() float64 {
+	// Microservers / 1000 is milliseconds, duration.Microseconds() returns an int, so when
+	// the number is divided by 1000 (floating point rounding aside) it will round to 3 decimal
+	// places.
+	return float64(t.duration.Microseconds()) / float64(1000)
+}
+
 // Returns true if the timer is  running
 func (t *Timer) IsRunning() bool {
 	return !t.start.IsZero() && t.duration == 0
@@ -355,7 +363,7 @@ func (t *Timer) toMarshalTimer() marshalTimer {
 		Name:     t.name,
 		Start:    epoch,
 		Tags:     tags,
-		Duration: math.Round(float64(t.duration)/float64(time.Millisecond)*1000) / 1000,
+		Duration: t.Milliseconds(),
 	}
 }
 

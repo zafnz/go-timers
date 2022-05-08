@@ -4,7 +4,6 @@ package timers
 import (
 	"context"
 	"encoding/json"
-	"math"
 	"strings"
 	"testing"
 	"time"
@@ -200,7 +199,7 @@ func TestTimerMarshal(t *testing.T) {
 	// so round t1 too.
 	t1.start = time.UnixMilli(t1.start.UnixMilli())
 	// Convert to milliseconds rounded to 3 decimal places (just like the marshall)
-	ms := math.Round(float64(t1.duration)/float64(time.Millisecond)*1000) / 1000
+	ms := float64(t1.Duration().Microseconds()) / 1000
 	t1.duration = time.Duration(ms * float64(time.Millisecond))
 	var t2 Timer
 	err = json.Unmarshal(bytes, &t2)
@@ -208,7 +207,13 @@ func TestTimerMarshal(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !t1.Compare(&t2) {
-		t.Error("Marshalling and Unmarshalling didn't match")
+		t.Logf("%v", t2)
+		bytes, err = json.Marshal(t1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log(string(bytes))
+		t.Fatal("Marshalling and Unmarshalling didn't match")
 	}
 
 	t3 := newSet().New("Blah")
