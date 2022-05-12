@@ -23,7 +23,7 @@ func TestSimplifyTimerName(t *testing.T) {
 func TestAddHeader(t *testing.T) {
 	s := newSet()
 	s.New("Test")
-	timer := s.New("Test").Start().nap().Stop()
+	timer := s.New("Blah").Start().nap().Stop()
 	response := httptest.NewRecorder()
 	s.AddHeader(response)
 	result := response.Result()
@@ -39,5 +39,8 @@ func TestAddHeader(t *testing.T) {
 	durStr := fmt.Sprintf("dur=%.3f", timer.Milliseconds())
 	if !strings.Contains(txt, durStr) {
 		t.Errorf("Header did not contain correct duration %s", durStr)
+	}
+	if !strings.Contains(txt, "id=2") {
+		t.Errorf("At least one timer wasn't id=2")
 	}
 }

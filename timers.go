@@ -41,6 +41,10 @@ type Timer struct {
 	duration time.Duration
 	tags     []string
 	subtimer *TimerSet
+	// For export use only -- not at all guarenteed accurate except as copies being
+	// generated for exporting tree
+	id       int
+	parentId int
 }
 
 type timerctx string
@@ -128,17 +132,29 @@ func (s *TimerSet) All() []Timer {
 // Returns a copy of all timers in this context and timers created
 // in child contexts (regardless of whether the underlying context)
 // has been canceled.
-func (s *TimerSet) AllDeep() []Timer {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	var timers []Timer
-	for _, t := range s.timers {
-		timers = append(timers, *t)
-		if t.subtimer != nil {
-			timers = append(timers, t.subtimer.AllDeep()...)
-		}
-	}
+func (s *TimerSet) AllDeep() []*Timer {
+	timers, _ := s.flatTree(0, 1)
 	return timers
+}
+
+// Flattens the tree, making a copy of it, setting the parentId and currentId for
+// timers as it goes.
+func (s *TimerSet) flatTree(parentId, currentId int) ([]*Timer, int) {
+	srcTimers := s.All()
+	timers := make([]*Timer, len(srcTimers))
+	for i := 0; i < len(srcTimers); i++ {
+		t := srcTimers[i]
+		t.parentId = parentId
+		t.id = currentId
+		if t.subtimer != nil {
+			var subtimers []*Timer
+			subtimers, currentId = t.subtimer.flatTree(currentId, currentId+1)
+			timers = append(timers, subtimers...)
+		}
+		currentId++
+		timers[i] = &t
+	}
+	return timers, currentId
 }
 
 // Walk the timer tree. Since you can create new TimerSets in new contexts, the timers are
@@ -246,7 +262,7 @@ func (t *Timer) Milliseconds() float64 {
 	// Microservers / 1000 is milliseconds, duration.Microseconds() returns an int, so when
 	// the number is divided by 1000 (floating point rounding aside) it will round to 3 decimal
 	// places.
-	return float64(t.duration.Microseconds()) / float64(1000)
+	return float64(t.Duration().Microseconds()) / float64(1000)
 }
 
 // Returns true if the timer is  running
@@ -283,11 +299,11 @@ func (t Timer) String() string {
 		tags = fmt.Sprintf(" tags:(%s)", strings.Join(t.tags, ","))
 	}
 	if t.start.IsZero() {
-		return fmt.Sprintf("%s: NotStarted%s", t.name, tags)
+		return fmt.Sprintf("%s: %d NotStarted%s", t.name, t.id, tags)
 	} else if t.duration == 0 {
-		return fmt.Sprintf("%s: Running%s", t.name, tags)
+		return fmt.Sprintf("%s: %d Running%s", t.name, t.id, tags)
 	} else {
-		return fmt.Sprintf("%s: %.3fms%s", t.name, float64(t.duration)/float64(time.Millisecond), tags)
+		return fmt.Sprintf("%s: %d %.3fms%s", t.name, t.id, float64(t.duration)/float64(time.Millisecond), tags)
 	}
 }
 
