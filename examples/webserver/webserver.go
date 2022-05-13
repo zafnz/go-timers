@@ -14,7 +14,7 @@ import (
 func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api", apiSampleEndpoint)
-	mux.Handle("/", http.FileServer(http.Dir("../../waterfall/")))
+	mux.Handle("/waterfall/", http.StripPrefix("/waterfall/", timers.WaterfallHandler()))
 	log.Fatal(http.ListenAndServe("127.0.0.1:3000", timerMiddleware(mux)))
 }
 

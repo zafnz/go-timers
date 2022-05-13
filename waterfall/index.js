@@ -1,36 +1,74 @@
 function el(id) {
     return document.getElementById(id);
 }
+let angryColors = true;
 function onLoad() {
-    var _a;
-    (_a = el('waterfall-button-fetch')) === null || _a === void 0 ? void 0 : _a.addEventListener('click', function () {
+    var _a, _b;
+    const url = new URL(window.location.toString());
+    const angryColorsElm = el('waterfall-angry-colors');
+    angryColors = url.searchParams.get('angry-colors') ? true : false;
+    if (angryColors) {
+        angryColorsElm.checked = true;
+    }
+    angryColorsElm.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            angryColors = true;
+            setLocationQueryParam('angry-colors', 'true');
+        }
+        else {
+            angryColors = false;
+            clearLocationQueryParam('angry-colors');
+        }
+        if (currentTree) {
+            emptyTimingsTable();
+            renderTree(currentTree, 0);
+        }
+    });
+    const urlElm = el('waterfall-request-url');
+    if (url.searchParams.get('url')) {
+        urlElm.value = url.searchParams.get('url');
+    }
+    (_a = el('waterfall-button-fetch')) === null || _a === void 0 ? void 0 : _a.addEventListener('click', () => {
         waterfallRequestSubmit();
     });
+    (_b = el('waterfall-request-method')) === null || _b === void 0 ? void 0 : _b.addEventListener('change', (e) => {
+        const selectElm = e.target;
+        if (selectElm.value == "GET") {
+            el('waterfall-body-holder').style.display = 'none';
+        }
+        else {
+            el('waterfall-body-holder').style.display = 'block';
+        }
+    });
+}
+function setLocationQueryParam(param, value) {
+    let url = new URL(document.location.toString());
+    url.searchParams.set(param, value);
+    window.history.replaceState({ path: url.toString() }, '', url.toString());
+}
+function clearLocationQueryParam(param) {
+    let url = new URL(document.location.toString());
+    url.searchParams.delete(param);
+    window.history.replaceState({ path: url.toString() }, '', url.toString());
 }
 function waterfallRequestSubmit() {
-    var _a, _b, _c, _d;
-    var method = (_a = el('waterfall-request-method')) === null || _a === void 0 ? void 0 : _a.value;
-    var path = (_b = el('waterfall-request-url')) === null || _b === void 0 ? void 0 : _b.value;
-    var bodyTxt = (_c = el('waterfall-request-body')) === null || _c === void 0 ? void 0 : _c.value;
-    var contentType = 'text/plain';
-    switch ((_d = el('waterfall-body-type')) === null || _d === void 0 ? void 0 : _d.value) {
-        case 'JSON':
-            contentType = 'application/json';
-            break;
-        case 'XML':
-            contentType = 'application/xml';
-            break;
-    }
+    var _a, _b, _c;
+    const method = (_a = el('waterfall-request-method')) === null || _a === void 0 ? void 0 : _a.value;
+    const path = (_b = el('waterfall-request-url')) === null || _b === void 0 ? void 0 : _b.value;
+    const bodyTxt = (_c = el('waterfall-request-body')) === null || _c === void 0 ? void 0 : _c.value;
+    let contentType = el('waterfall-body-type').value;
+    setLocationQueryParam("url", path);
     makeWaterfallRequest(method, path, bodyTxt, contentType);
 }
 function setStatusText(str) {
-    var statusElm = el('status-text');
+    const statusElm = el('status-text');
     if (statusElm)
         statusElm.innerText = str;
 }
+let currentTree;
 function makeWaterfallRequest(method, path, body, type) {
-    var init = {
-        method: method
+    let init = {
+        method: method,
     };
     if (type !== undefined) {
         init.headers = { 'Content-Type': type };
@@ -38,24 +76,26 @@ function makeWaterfallRequest(method, path, body, type) {
     if (method != "GET" && method != "HEAD" && body !== undefined) {
         init.body = body;
     }
-    console.log(path);
-    fetch(path, init).then(function (r) {
-        var timingHeader = r.headers.get('Server-Timing');
+    emptyTimingsTable();
+    currentTree = undefined;
+    setStatusText('Making request...');
+    fetch(path, init).then((r) => {
+        const timingHeader = r.headers.get('Server-Timing');
         if (!timingHeader) {
-            setStatusText('Failed to get headers for response');
+            setStatusText('No Server-Timing headers in response');
             return;
         }
-        console.log(timingHeader);
+        setStatusText('');
         renderTimingsFromHeader(timingHeader);
-    }); /*.catch((e: any) => {
-        setStatusText(`Failed to make request: ${e}`)
-    })*/
+    }).catch((e) => {
+        setStatusText(`Failed to make request: ${e}`);
+    });
 }
 function splitHeader(header) {
-    var inQuote = false;
-    var start = 0;
-    var timers = [];
-    for (var i = 0; i < header.length; i++) {
+    let inQuote = false;
+    let start = 0;
+    let timers = [];
+    for (let i = 0; i < header.length; i++) {
         if (header[i] == '"') {
             inQuote = inQuote ? false : true;
         }
@@ -67,19 +107,18 @@ function splitHeader(header) {
     return timers;
 }
 function headerTimingToTree(header) {
-    var timers = splitHeader(header);
-    var re = new RegExp('([^;=]*)=("([^"]*)"|[^";]*)|([^=;]+);', 'g');
-    var position = {};
-    var startTime;
-    var endTime;
-    for (var _i = 0, timers_1 = timers; _i < timers_1.length; _i++) {
-        var timerStr = timers_1[_i];
+    const timers = splitHeader(header);
+    const re = new RegExp('([^;=]*)=("([^"]*)"|[^";]*)|([^=;]+);', 'g');
+    let position = {};
+    let startTime;
+    let endTime;
+    for (let timerStr of timers) {
         timerStr = timerStr + ';';
-        var timer_1 = { children: [] };
-        var match = void 0;
+        let timer = { children: [] };
+        let match;
         while ((match = re.exec(timerStr)) !== null) {
-            var val = void 0;
-            var name_1 = match[1] ? match[1] : match[4];
+            let val;
+            let name = match[1] ? match[1] : match[4];
             if (match[3] != undefined) {
                 val = match[3];
             }
@@ -89,15 +128,15 @@ function headerTimingToTree(header) {
             else {
                 val = match[4];
             }
-            timer_1[name_1] = val;
+            timer[name] = val;
         }
-        var t = {
-            id: timer_1['id'] !== undefined ? parseInt(timer_1['id']) : undefined,
-            parent: timer_1['parent'] !== undefined ? parseInt(timer_1['parent']) : undefined,
-            name: timer_1['descr'],
-            start: parseInt(timer_1['start']),
-            duration: parseFloat(timer_1['dur']),
-            children: []
+        let t = {
+            id: timer['id'] !== undefined ? parseInt(timer['id']) : undefined,
+            parent: timer['parent'] !== undefined ? parseInt(timer['parent']) : undefined,
+            name: timer['descr'],
+            start: parseInt(timer['start']),
+            duration: parseFloat(timer['dur']),
+            children: [],
         };
         if (t.id !== undefined) {
             position[t.id] = t;
@@ -109,11 +148,9 @@ function headerTimingToTree(header) {
             endTime = t.start + t.duration;
         }
     }
-    console.log(position);
-    var root = [];
-    var timer;
-    for (var _a = 0, _b = Object.values(position); _a < _b.length; _a++) {
-        timer = _b[_a];
+    let root = [];
+    let timer;
+    for (timer of Object.values(position)) {
         if (timer.id === undefined || timer.parent === undefined) {
             root.push(timer);
         }
@@ -124,34 +161,38 @@ function headerTimingToTree(header) {
             position[timer.parent].children.push(timer);
         }
     }
-    for (var _c = 0, _d = Object.values(position); _c < _d.length; _c++) {
-        timer = _d[_c];
+    for (timer of Object.values(position)) {
         if (timer.children.length > 0) {
-            timer.children.sort(function (a, b) {
+            timer.children.sort((a, b) => {
                 if (a.start != b.start)
                     return a.start - b.start;
                 return a.dur - b.dur;
             });
         }
     }
-    console.log(root);
-    var tree = {
+    //console.log(root)
+    let tree = {
         nodes: root,
         start: startTime,
-        end: endTime
+        end: endTime,
     };
     return tree;
 }
 function renderTimingsFromHeader(header) {
-    var tree = headerTimingToTree(header);
-    // TODO: Empty table body
+    const tree = headerTimingToTree(header);
+    currentTree = tree;
+    emptyTimingsTable();
     renderTree(tree, 0);
 }
+function emptyTimingsTable() {
+    const tBodyElm = el('waterfall-table-body');
+    while (tBodyElm.firstChild)
+        tBodyElm.removeChild(tBodyElm.firstChild);
+}
 function renderTree(tree, depth) {
-    var tBodyElm = el('waterfall-table-body');
-    for (var _i = 0, _a = tree.nodes; _i < _a.length; _i++) {
-        var node = _a[_i];
-        var rowElm = buildTableRow(node, depth, tree.start, tree.end);
+    const tBodyElm = el('waterfall-table-body');
+    for (const node of tree.nodes) {
+        const rowElm = buildTableRow(node, depth, tree.start, tree.end);
         tBodyElm.appendChild(rowElm);
         renderTree({
             nodes: node.children,
@@ -161,34 +202,37 @@ function renderTree(tree, depth) {
     }
 }
 function buildTableRow(node, depth, start, end) {
-    var rowElm = document.createElement('tr');
-    var nameCellElm = document.createElement('td');
-    var timingElm = document.createElement('td');
-    var barElm = document.createElement('div');
-    var nameElm = document.createElement('span');
+    const rowElm = document.createElement('tr');
+    const nameCellElm = document.createElement('td');
+    const timingElm = document.createElement('td');
+    const barElm = document.createElement('div');
+    const nameElm = document.createElement('span');
     nameCellElm.className = "waterfall-name-cell";
     timingElm.className = "waterfall-timer-cell";
     barElm.className = "waterfall-timer-bar";
     nameElm.className = "waterfall-timer-name";
-    for (var i = 0; i < depth; i++) {
-        var indentElm = document.createElement('span');
+    for (let i = 0; i < depth; i++) {
+        const indentElm = document.createElement('span');
         indentElm.innerHTML = "&nbsp;";
         indentElm.className = "waterfall-indent";
         nameCellElm.appendChild(indentElm);
     }
     nameElm.innerText = node.name;
     nameCellElm.appendChild(nameElm);
-    var totalDuration = end - start;
-    var percentWidth = Math.round((node.duration / totalDuration) * 100);
-    var percentOffset = Math.round(((node.start - start) / totalDuration) * 100);
-    barElm.style.left = "".concat(percentOffset, "%");
-    barElm.style.width = "".concat(percentWidth, "%");
-    barElm.innerText = "".concat(Math.round(node.duration * 10) / 10, "ms");
+    const totalDuration = end - start;
+    const percentWidth = Math.round((node.duration / totalDuration) * 100);
+    const percentOffset = Math.round(((node.start - start) / totalDuration) * 100);
+    barElm.style.left = `${percentOffset}%`;
+    barElm.style.width = `${percentWidth}%`;
+    barElm.innerText = `${Math.round(node.duration * 10) / 10}ms`;
+    if (angryColors) {
+        barElm.style.backgroundImage = `linear-gradient(hsl(${100 - percentWidth}, 60%, 60%), hsl(${100 - percentWidth}, 60%, 40%))`;
+    }
     timingElm.appendChild(barElm);
     rowElm.appendChild(nameCellElm);
     rowElm.appendChild(timingElm);
     return rowElm;
 }
-window.addEventListener('load', function (event) {
+window.addEventListener('load', (event) => {
     onLoad();
 });

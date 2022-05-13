@@ -4,114 +4,233 @@
 <head>
   <title>go-timers waterfall</title>
   <script type="application/javascript" src="index.js"></script>
-<style>
-.waterfall-request > .body > #waterfall-request-body {
-  display:block;
-}
-.waterfall-request {
-  margin: 1rem;
-  padding: 1rem;
-  border: 1px solid rgb(184, 184, 184);
-}
-.waterfall-request, .waterfall-table {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  <style>
 
-}
-.waterfall-request-url-row {
-  display: flex;
+    html,body { padding: 0; margin: 0; box-sizing: content-box;}
 
-}
-.waterfall-request > .waterfall-request-url-row > #waterfall-request-method {
-  margin-right:1rem;
-}
-.waterfall-request > .waterfall-request-url-row > #waterfall-request-url {
-  flex-grow: 1;
-  width: 100%;
-}
+    .waterfall {
+      padding: 1em;
+      padding-top: 0;
+    }
+    .waterfall-request>.body>#waterfall-request-body {
+      display: block;
+    }
+ 
 
-.waterfall-indent {
-  width: 0.5rem;
-  margin-right: 0.2rem;
-  margin-left: 1rem;
-  display: inline-block
-}
+    .waterfall-request {
+      margin: 1rem;
+      padding: 1rem;
+      border: 1px solid rgb(184, 184, 184);
+    }
 
-.waterfall-table {
-  width: 100%;
-  border-collapse:collapse;
-}
-.waterfall-table thead {
-  background: rgba(213, 213, 213, 0.5);
-	background: linear-gradient(rgb(213, 213, 213,0.4), rgb(200, 200, 200,0.6));  
-}
-.waterfall-table td { 
-  padding: 0;
-}
-.waterfall-table tr {
-  border-bottom: 1px dotted rgb(216, 216, 216);
-}
-.waterfall-table tr:hover {
-  background: rgb(234, 234, 234);
-}
-.waterfall-table .waterfall-timer-cell {
-  width: 100%;
-}
-.waterfall-table .waterfall-name-cell {
-  min-width: 15rem;
-}
-.waterfall-table .waterfall-timer-name {
-  background: rgba(213, 213, 213, 0.5);
-	background: linear-gradient(rgb(213, 213, 213,0.4), rgb(200, 200, 200,0.6));  
 
-  font-size: 95%;
-  padding: 2% 4%;
-  border-radius: 0px 20px 20px 20px;
-}
-.waterfall-table .waterfall-timer-bar {
-  height: 1.5rem;
-  min-width: 1px;
-  background: rgb(154, 154, 251);
-  border-radius: 15px;
-  color:rgb(0, 0, 0);
-  position:relative;
-  text-align: center;
-	background: linear-gradient(rgb(154, 154, 251), rgb(145, 145, 209));  
-}
-</style>
+    .waterfall-request,
+    .waterfall-table,
+    .waterfall-header {
+      font-family: -apple-system, BlinkMacSystemFont, 'Roboto', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+
+    }
+
+    .waterfall-header {
+      margin: 0;
+      padding: 0.2em 0.5em;
+      background: #0abafa;
+      background: linear-gradient(#2ac3fb 0%,#0abafa 10%,#078aba 90%, #0177a2 100%);
+    }
+
+    .waterfall-request-url-row {
+      display: flex;
+
+    }
+
+    .waterfall-request>.waterfall-request-url-row>#waterfall-request-method {
+      margin-right: 1rem;
+    }
+
+    .waterfall-request>.waterfall-request-url-row>#waterfall-request-url {
+      flex-grow: 1;
+      width: 100%;
+    }
+
+    .waterfall-request .waterfall-request-options-row {
+      margin-top: 0.5rem;
+    }
+
+    #waterfall-button-fetch {
+      padding: 0.2rem 3rem;
+      border-radius: 20px;
+
+      flex-direction: column;
+      align-items: center;
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: none;
+      margin-right:2em;
+
+      color: #fff;
+      background: linear-gradient(180deg, #4B91F7 0%, #367AF6 100%);
+      background-origin: border-box;
+      box-shadow: 0px 0.5px 1.5px rgba(54, 122, 246, 0.25), inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2);
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    #waterfall-button-fetch:active {
+      background: linear-gradient(180deg, #5d9bf8 0%, #4787ff 100%);
+
+    }
+
+
+    input[type="checkbox"].switch_1 {
+      top: 0.5em;
+      font-size: 1em;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      width: 3.5em;
+      height: 1.5em;
+      background: #ddd;
+      border-radius: 3em;
+      position: relative;
+      cursor: pointer;
+      outline: none;
+      -webkit-transition: all .2s ease-in-out;
+      transition: all .2s ease-in-out;
+    }
+
+    input[type="checkbox"].switch_1:checked {
+      background: #0ebeff;
+      background: linear-gradient(#0ebeff, #0da4db);
+    }
+
+    input[type="checkbox"].switch_1:after {
+      position: absolute;
+      content: "";
+      width: 1.5em;
+      height: 1.5em;
+      border-radius: 50%;
+      background: #fff;
+      -webkit-box-shadow: 0 0 .25em rgba(0, 0, 0, .3);
+      box-shadow: 0 0 .25em rgba(0, 0, 0, .3);
+      -webkit-transform: scale(.7);
+      transform: scale(.7);
+      left: 0;
+      -webkit-transition: all .2s ease-in-out;
+      transition: all .2s ease-in-out;
+    }
+
+    input[type="checkbox"].switch_1:checked:after {
+      left: calc(100% - 1.5em);
+    }
+
+
+
+    #waterfall-request-body {
+      width: 100%;
+      display: block;
+    }
+
+    .waterfall-indent {
+      width: 0.5rem;
+      margin-right: 0.2rem;
+      margin-left: 1rem;
+      display: inline-block
+    }
+
+    .waterfall-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .waterfall-table thead {
+      background: rgba(213, 213, 213);
+      background: linear-gradient(rgb(213, 213, 213), rgb(158, 158, 158));
+    }
+
+    .waterfall-table td {
+      padding: 0;
+    }
+
+    .waterfall-table tr {
+      border-bottom: 1px dotted rgb(216, 216, 216);
+    }
+
+    .waterfall-table tbody > tr:hover {
+      background: rgb(234, 234, 234);
+    }
+
+    .waterfall-table .waterfall-timer-cell {
+      width: 100%;
+    }
+
+    .waterfall-table .waterfall-name-cell {
+      min-width: 15rem;
+    }
+
+    .waterfall-table .waterfall-timer-name {
+      background: rgba(213, 213, 213, 0.5);
+      background: linear-gradient(rgb(213, 213, 213, 0.4), rgb(200, 200, 200, 0.6));
+
+      font-size: 95%;
+      padding: 2% 4%;
+      border-radius: 0px 20px 20px 20px;
+    }
+
+    .waterfall-table .waterfall-timer-bar {
+      height: 1.5rem;
+      min-width: 1px;
+      background: rgb(154, 154, 251);
+      border-radius: 15px;
+      color: rgb(0, 0, 0);
+      position: relative;
+      text-align: center;
+      background: linear-gradient(rgb(154, 154, 251), rgb(145, 145, 209));
+    }
+  </style>
 </head>
 
 <body>
-<h1>Waterfall</h1>
-<div class="waterfall-request">
-  <div class="waterfall-request-url-row">
-    <select name="method" id="waterfall-request-method">
-      <option>GET</option>
-      <option>POST</option>
-      <option>PUT</option>
-      <option>DELETE</option>
-      <option>HEAD</option>
-    </select>
-    <input type="url" id="waterfall-request-url" size="30" placeholder="http://example.com" value="/api" />
+  <h1 class="waterfall-header">go-timers Waterfall Inspector</h1>
+  <div class="waterfall">
+  <div class="waterfall-request">
+    <div class="waterfall-request-url-row">
+      <select name="method" id="waterfall-request-method">
+        <option>GET</option>
+        <option>POST</option>
+        <option>PUT</option>
+        <option>DELETE</option>
+        <option>HEAD</option>
+      </select>
+      <input type="url" id="waterfall-request-url" size="30" placeholder="http://example.com" value="/api" />
+    </div>
+    <div id="waterfall-body-holder" style="display:none">
+      <label for="waterfall-body-type">Content-Type</label>
+      <select id="waterfall-body-type" name="body-type">
+        <option>application/json</option>
+        <option>text/plain</option>
+        <option>application/xml</option>
+      </select>
+      <textarea cols="30" rows="6" id="waterfall-request-body"></textarea>
+    </div>
+    <div class="waterfall-request-options-row">
+      <button id="waterfall-button-fetch">Fetch</button>
+      Options:
+      <label for="waterfall-angry-colors">Angry Colours</label>
+      <input class="switch_1" type="checkbox" id="waterfall-angry-colors" />
+
+    </div>
+    <div id="status-text"></div>
   </div>
-  <div class="body" style="display:none">
-    <label for="waterfall-body-type">Content-Type</label>
-    <select id="waterfall-body-type" name="body-type"><option>JSON</option><option>Text</option><option>XML</option></select>
-    <textarea cols="30" rows="6" id="waterfall-request-body"></textarea>
-  </div>
-  <div class="waterfall-request-options-row">
-    <button id="waterfall-button-fetch">Fetch</button>
-  </div>
-  <div id="status-text"></div>
+  <table class="waterfall-table">
+    <thead>
+      <th>Timer</th>
+      <th>Duration</th>
+    </thead>
+    <tbody id="waterfall-table-body">
+
+    </tbody>
+  </table>
 </div>
-<table class="waterfall-table">
-  <thead>
-    <th>Timer</th>
-    <th>Duration</th>
-  </thead>
-  <tbody id="waterfall-table-body">
-
-  </tbody>
-</table>
 </body>
-
 </html>

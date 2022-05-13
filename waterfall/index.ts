@@ -3,21 +3,65 @@ function el(id: string) : HTMLElement{
     return document.getElementById(id)
 }
 
+let angryColors = true
+
 function onLoad() {
+    const url = new URL(window.location.toString())
+
+    const angryColorsElm = el('waterfall-angry-colors') as HTMLInputElement
+    angryColors = url.searchParams.get('angry-colors') ? true : false
+    if (angryColors) {
+        angryColorsElm.checked = true
+    }
+    angryColorsElm.addEventListener('change', (e: Event) => {
+        if ((e.target as HTMLInputElement).checked) {
+            angryColors = true
+            setLocationQueryParam('angry-colors', 'true')
+        } else {
+            angryColors = false
+            clearLocationQueryParam('angry-colors')
+        }
+        if (currentTree) {
+            emptyTimingsTable()
+            renderTree(currentTree, 0)
+        }
+    })
+
+    const urlElm = el('waterfall-request-url') as HTMLInputElement
+    if (url.searchParams.get('url')) {
+        urlElm.value = url.searchParams.get('url')
+    }
+
     el('waterfall-button-fetch')?.addEventListener('click', () => {
         waterfallRequestSubmit()
     })
+    el('waterfall-request-method')?.addEventListener('change', (e: Event) => {
+        const selectElm = e.target as HTMLSelectElement
+        if (selectElm.value == "GET") {
+            el('waterfall-body-holder').style.display = 'none'
+        } else {
+            el('waterfall-body-holder').style.display = 'block'
+        }
+    })
+}
+
+function setLocationQueryParam(param:string, value:string) {
+    let url = new URL(document.location.toString())
+    url.searchParams.set(param, value)
+    window.history.replaceState({path:url.toString()},'',url.toString());
+}
+function clearLocationQueryParam(param:string) {
+    let url = new URL(document.location.toString())
+    url.searchParams.delete(param)
+    window.history.replaceState({path:url.toString()},'',url.toString());
 }
 
 function waterfallRequestSubmit() {
     const method = (el('waterfall-request-method') as HTMLSelectElement)?.value
     const path = (el('waterfall-request-url') as HTMLInputElement)?.value 
     const bodyTxt = (el('waterfall-request-body') as HTMLTextAreaElement)?.value 
-    let contentType = 'text/plain'
-    switch((el('waterfall-body-type') as HTMLSelectElement)?.value) {
-    case 'JSON': contentType = 'application/json'; break
-    case 'XML': contentType = 'application/xml'; break
-    }
+    let contentType = (el('waterfall-body-type') as HTMLSelectElement).value
+    setLocationQueryParam("url", path)
     makeWaterfallRequest(method, path, bodyTxt, contentType)
 }
 
@@ -40,6 +84,8 @@ interface Tree {
     end:number
 }
 
+let currentTree:Tree 
+
 function makeWaterfallRequest(method: string, path: string, body?:string, type?:string) {
     let init: RequestInit = {
         method: method,
@@ -51,18 +97,20 @@ function makeWaterfallRequest(method: string, path: string, body?:string, type?:
     if (method != "GET" && method != "HEAD" && body !== undefined) {
         init.body = body 
     }
-    console.log(path)
+    emptyTimingsTable()
+    currentTree = undefined
+    setStatusText('Making request...')
     fetch(path, init).then((r: Response) => {
         const timingHeader = r.headers.get('Server-Timing')
         if (!timingHeader) {
-            setStatusText('Failed to get headers for response')
+            setStatusText('No Server-Timing headers in response')
             return
         }
-        console.log(timingHeader)
+        setStatusText('')
         renderTimingsFromHeader(timingHeader)
-    })/*.catch((e: any) => {
+    }).catch((e: any) => {
         setStatusText(`Failed to make request: ${e}`)
-    })*/
+    })
 } 
 function splitHeader(header: string):Array<string> {
     let inQuote = false 
@@ -119,7 +167,6 @@ function headerTimingToTree(header: string):Tree {
             endTime = t.start + t.duration
         }
     }
-    console.log(position)
 
     let root:Array<Timer> = []
     let timer: any
@@ -140,7 +187,7 @@ function headerTimingToTree(header: string):Tree {
             })
         }
     }
-    console.log(root)
+    //console.log(root)
     let tree:Tree = {
         nodes: root,
         start: startTime, 
@@ -150,9 +197,15 @@ function headerTimingToTree(header: string):Tree {
 }
 function renderTimingsFromHeader(header: string) {
     const tree = headerTimingToTree(header)
-    // TODO: Empty table body
-    renderTree(tree, 0)
+    currentTree = tree
+    emptyTimingsTable()
+    renderTree(tree,0)
 }
+function emptyTimingsTable() {
+    const tBodyElm = el('waterfall-table-body')
+    while(tBodyElm.firstChild) tBodyElm.removeChild(tBodyElm.firstChild)
+}
+
 
 function renderTree(tree: Tree, depth: number) {
     const tBodyElm = el('waterfall-table-body')
@@ -194,6 +247,10 @@ function buildTableRow(node: Timer, depth:number, start:number, end:number): HTM
     barElm.style.left = `${percentOffset}%`
     barElm.style.width = `${percentWidth}%`
     barElm.innerText = `${Math.round(node.duration * 10)/10 }ms`
+
+    if (angryColors) {
+        barElm.style.backgroundImage = `linear-gradient(hsl(${100-percentWidth}, 60%, 60%), hsl(${100-percentWidth}, 60%, 40%))`
+    }
 
     timingElm.appendChild(barElm)
     rowElm.appendChild(nameCellElm)
