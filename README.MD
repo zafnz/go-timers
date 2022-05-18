@@ -46,17 +46,17 @@ as a tree using timers.From(ctx).Tree(callback), or -- if you are writting a web
 the Server-Timings header and waterfall display.
 
 ### http headers
+<img align="right" src="waterfall.png" alt="waterfall example" width="300"/>
 Coming real soon is a full middleware, but available now is TimerSet.AddHeader(http.ResponseWriter) which
-adds the new [Server-Timing header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Server-Timing).
+adds the <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Server-Timing">Server-Timing header</a>.
 
 Once a Server-Timing header is set, you can view the timings either using the in browser inspector, or you
 can use the go-timers built-in waterfall display.
 
-## Waterfall
-By calling timers.WaterfallHandler() you get a http Handler that will render a waterfall of calls to your
+### Waterfall
+By calling `timers.WaterfallHandler()` you get a http Handler that will render a waterfall of calls to your
 web process. See the `examples/waterfall` directory for a very simple example. 
 
-![WaterfallExample](https://raw.githubusercontent.com/zafnz/go-timers/main/waterfall.png)
 
 ## Grouping/children
 Timers can be grouped by deriving a new context.
