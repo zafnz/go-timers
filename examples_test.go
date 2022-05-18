@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"math/rand"
 	"strings"
 	"sync"
@@ -28,6 +29,9 @@ func moreMajorWork(ctx context.Context) {
 		fmt.Println("subwork finished")
 	})
 	fmt.Println("more major work finished")
+}
+func someApiCall(_ int) {
+	time.Sleep(10 * time.Millisecond)
 }
 
 func Example() {
@@ -102,6 +106,20 @@ func ExampleTimer_Tags() {
 	fmt.Printf("%s", timer.Tags())
 	// Output:
 	// [Test]
+}
+
+func ExampleTimer_Measure() {
+	ctx := timers.NewContext(context.Background())
+	// Want to measure how long this API call will take.
+	someData := 42
+	timers.From(ctx).New("apiCall").Measure(func() {
+		// This function will take just over 10ms
+		someApiCall(someData)
+	})
+	ms := timers.From(ctx).Find("apiCall").Milliseconds()
+	fmt.Println(math.Floor(ms))
+	// Output:
+	// 10
 }
 
 func goDoSomeWork(_ context.Context) {

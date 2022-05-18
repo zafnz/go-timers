@@ -121,6 +121,21 @@ func TestContextInheritence(t *testing.T) {
 		t.Error("Timer lost in creation of new context from existing")
 	}
 }
+
+func TestTimerMeasure(t *testing.T) {
+	ctx := NewContext(context.Background())
+	From(ctx).New("TimerWrap").Measure(func() {
+		// Simple stuff
+		time.Sleep(10 * time.Nanosecond)
+	})
+	timer := From(ctx).Find("TimerWrap")
+	if timer == nil {
+		t.Fatal("Couldn't find TimerWrap")
+	}
+	if timer.Duration() == 0 {
+		t.Error("Timer didn't measure anything")
+	}
+}
 func TestDuplicateNames(t *testing.T) {
 	set := newSet()
 	t1 := set.New("timer")

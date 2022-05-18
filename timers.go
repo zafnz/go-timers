@@ -103,7 +103,7 @@ func newSet() *TimerSet {
 // Get TimerSet from provided context (if any), otherwise return nil.
 //
 // You probably don't want this function. You want to always create a context with a new TimerSet
-// (timers.NewContext()), and just use timers.From(ctx) to retrieve it -- knowing it's safe because
+// (timers.NewContext()) and just use timers.From(ctx) to retrieve it -- knowing it's safe because
 // if you end up in a context that has no timers it will still give you a working TimerSet.
 // Otherwise what are you going to do if this function returns nil? Create a new context with
 // NewContext()? Then just use NewContext in the first place.
@@ -184,6 +184,9 @@ func (s *TimerSet) walkTree(p *TimerSet, depth int, fn func(Timer, int, *TimerSe
 // Wrap a block of work with a timer set in a new context. All timers that occur in the provided
 // context will be children of the current context. The current context will have a timer
 // measuring the duration.
+//
+// NOTE: You may find TImer.Wrap() to be better suited, it is simplier and doesn't require context
+// passing.
 //
 // e.g. In the example below, a new Main context is created, and it will have 2 timers, Stuff and
 // Some Work. The "Some Work" timer will have 3 sub timers under it.
@@ -299,11 +302,11 @@ func (t Timer) String() string {
 		tags = fmt.Sprintf(" tags:(%s)", strings.Join(t.tags, ","))
 	}
 	if t.start.IsZero() {
-		return fmt.Sprintf("%s: %d NotStarted%s", t.name, t.id, tags)
+		return fmt.Sprintf("%s: NotStarted%s", t.name, tags)
 	} else if t.duration == 0 {
-		return fmt.Sprintf("%s: %d Running%s", t.name, t.id, tags)
+		return fmt.Sprintf("%s: Running%s", t.name, tags)
 	} else {
-		return fmt.Sprintf("%s: %d %.3fms%s", t.name, t.id, float64(t.duration)/float64(time.Millisecond), tags)
+		return fmt.Sprintf("%s: %.3fms%s", t.name, float64(t.duration)/float64(time.Millisecond), tags)
 	}
 }
 
@@ -318,8 +321,20 @@ func (t *Timer) Compare(t2 *Timer) bool {
 	}
 }
 
-//  Marshaling type
+// Very trivial wrapper function. Simply wraps the provided function with the timer, allowing simple
+// duration measurement. Use with closure style.
+// Differs from timers.From(ctx).Wrap() because this method does not create a new
+// context and TimerSet. See `TimerSet.Wrap()``
+//  From(ctx).New("Timer").Wrap(func() {
+//      SomeFunction(things, stuff)
+//  })
+func (t *Timer) Measure(fn func()) {
+	t.Start()
+	fn()
+	t.Stop()
+}
 
+//  Marshaling type
 type marshalTimer struct {
 	Name     string          `json:"name"`
 	Start    int64           `json:"start"`
