@@ -325,7 +325,7 @@ type marshalTimer struct {
 	Start    int64           `json:"start"`
 	Duration float64         `json:"duration"`
 	Tags     *[]string       `json:"tags,omitempty"`
-	Children *[]marshalTimer `json:"child_timers,omitempty"`
+	Children *[]marshalTimer `json:"children,omitempty"`
 }
 
 // Exports a TimerSet as a list of timers, each timer may have a
@@ -390,7 +390,6 @@ func (t *Timer) UnmarshalJSON(bytes []byte) error {
 		return err // Anyone know how I can get here in code coverage? :P
 	}
 	t.fromMarshaledTimer(mt)
-
 	return nil
 }
 
@@ -399,7 +398,15 @@ func (t *Timer) fromMarshaledTimer(mt marshalTimer) {
 	if mt.Start != 0 {
 		t.start = time.UnixMilli(mt.Start)
 	}
-	t.duration = time.Duration(mt.Duration * float64(time.Millisecond))
+	if mt.Duration == 0 {
+		// So here's a thing. If we're marshalling data from a file, if there is a zero
+		// duration, it's probable that the actual millisecond value is zero, and not that
+		// the timer hasn't stopped.
+		// So we will interpret a Duration of zero, to be a duration of 1ns.
+		t.duration = time.Duration(1)
+	} else {
+		t.duration = time.Duration(mt.Duration * float64(time.Millisecond))
+	}
 	if mt.Tags != nil {
 		t.tags = *mt.Tags
 	}

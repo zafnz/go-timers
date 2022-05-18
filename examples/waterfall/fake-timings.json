@@ -1,0 +1,685 @@
+[
+    {
+        "id": 1,
+        "parent": 0,
+        "name": "ApiV1GetInformation",
+        "start": 1652470881905,
+        "duration": 1890.107,
+        "children": []
+    },
+    {
+        "id": 2,
+        "parent": 0,
+        "name": "total",
+        "start": 1652470881905,
+        "duration": 1889.96,
+        "children": []
+    },
+    {
+        "id": 3,
+        "parent": 0,
+        "name": "GetInformationData",
+        "start": 1652470881905,
+        "duration": 1889.723,
+        "children": [
+            {
+                "id": 4,
+                "parent": 3,
+                "name": "st-ca-1",
+                "start": 1652470881906,
+                "duration": 766.708,
+                "children": [
+                    {
+                        "id": 5,
+                        "parent": 4,
+                        "name": "getSiteClient",
+                        "start": 1652470881906,
+                        "duration": 246.988,
+                        "children": []
+                    },
+                    {
+                        "id": 7,
+                        "parent": 4,
+                        "name": "beDelta.queryBy:application",
+                        "start": 1652470882153,
+                        "duration": 519.714,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": 9,
+                "parent": 3,
+                "name": "aws-us-west1",
+                "start": 1652470881906,
+                "duration": 422.18,
+                "children": [
+                    {
+                        "id": 10,
+                        "parent": 9,
+                        "name": "getSiteClient",
+                        "start": 1652470881906,
+                        "duration": 0.001,
+                        "children": []
+                    },
+                    {
+                        "id": 12,
+                        "parent": 9,
+                        "name": "beAlpha.queryBy:application",
+                        "start": 1652470881906,
+                        "duration": 422.168,
+                        "children": []
+                    },
+                    {
+                        "id": 13,
+                        "parent": 9,
+                        "name": "FetchHostHealth (aws-us-west1)",
+                        "start": 1652470882328,
+                        "duration": 0,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": 15,
+                "parent": 3,
+                "name": "site-vtx1",
+                "start": 1652470881906,
+                "duration": 614.56,
+                "children": [
+                    {
+                        "id": 16,
+                        "parent": 15,
+                        "name": "getSiteClient",
+                        "start": 1652470881906,
+                        "duration": 254.87,
+                        "children": []
+                    },
+                    {
+                        "id": 18,
+                        "parent": 15,
+                        "name": "beAlpha.queryBy:application",
+                        "start": 1652470882161,
+                        "duration": 359.676,
+                        "children": []
+                    },
+                    {
+                        "id": 19,
+                        "parent": 15,
+                        "name": "FetchHostHealth (site-vtx1)",
+                        "start": 1652470882520,
+                        "duration": 0,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": 21,
+                "parent": 3,
+                "name": "aws-us-east1",
+                "start": 1652470881906,
+                "duration": 427.927,
+                "children": [
+                    {
+                        "id": 22,
+                        "parent": 21,
+                        "name": "getSiteClient",
+                        "start": 1652470881906,
+                        "duration": 0.001,
+                        "children": []
+                    },
+                    {
+                        "id": 24,
+                        "parent": 21,
+                        "name": "beAlpha.queryBy:application",
+                        "start": 1652470881906,
+                        "duration": 427.915,
+                        "children": []
+                    },
+                    {
+                        "id": 25,
+                        "parent": 21,
+                        "name": "FetchHostHealth (aws-us-east1)",
+                        "start": 1652470882334,
+                        "duration": 0.001,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": 27,
+                "parent": 3,
+                "name": "aws-dev-3",
+                "start": 1652470881906,
+                "duration": 357.2,
+                "children": [
+                    {
+                        "id": 28,
+                        "parent": 27,
+                        "name": "getSiteClient",
+                        "start": 1652470881906,
+                        "duration": 0.001,
+                        "children": []
+                    },
+                    {
+                        "id": 30,
+                        "parent": 27,
+                        "name": "beAlpha.queryBy:application",
+                        "start": 1652470881906,
+                        "duration": 357.173,
+                        "children": []
+                    },
+                    {
+                        "id": 31,
+                        "parent": 27,
+                        "name": "FetchHostHealth (aws-dev-3)",
+                        "start": 1652470882263,
+                        "duration": 0.018,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": 33,
+                "parent": 3,
+                "name": "site-vva1",
+                "start": 1652470881906,
+                "duration": 573.909,
+                "children": [
+                    {
+                        "id": 34,
+                        "parent": 33,
+                        "name": "getSiteClient",
+                        "start": 1652470881906,
+                        "duration": 246.923,
+                        "children": []
+                    },
+                    {
+                        "id": 36,
+                        "parent": 33,
+                        "name": "beAlpha.queryBy:application",
+                        "start": 1652470882153,
+                        "duration": 326.969,
+                        "children": []
+                    },
+                    {
+                        "id": 37,
+                        "parent": 33,
+                        "name": "FetchHostHealth (site-vva1)",
+                        "start": 1652470882480,
+                        "duration": 0,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": 39,
+                "parent": 3,
+                "name": "aws-south-1",
+                "start": 1652470881906,
+                "duration": 428.419,
+                "children": [
+                    {
+                        "id": 40,
+                        "parent": 39,
+                        "name": "getSiteClient",
+                        "start": 1652470881906,
+                        "duration": 0.001,
+                        "children": []
+                    },
+                    {
+                        "id": 42,
+                        "parent": 39,
+                        "name": "beAlpha.queryBy:application",
+                        "start": 1652470881906,
+                        "duration": 428.412,
+                        "children": []
+                    },
+                    {
+                        "id": 43,
+                        "parent": 39,
+                        "name": "FetchHostHealth (aws-south-1)",
+                        "start": 1652470882334,
+                        "duration": 0,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": 45,
+                "parent": 3,
+                "name": "dev5",
+                "start": 1652470881906,
+                "duration": 528.325,
+                "children": [
+                    {
+                        "id": 46,
+                        "parent": 45,
+                        "name": "getSiteClient",
+                        "start": 1652470881906,
+                        "duration": 246.651,
+                        "children": []
+                    },
+                    {
+                        "id": 48,
+                        "parent": 45,
+                        "name": "beDelta.queryBy:application",
+                        "start": 1652470882153,
+                        "duration": 281.666,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": 50,
+                "parent": 3,
+                "name": "site-vca1",
+                "start": 1652470881906,
+                "duration": 516.477,
+                "children": [
+                    {
+                        "id": 51,
+                        "parent": 50,
+                        "name": "getSiteClient",
+                        "start": 1652470881906,
+                        "duration": 254.358,
+                        "children": []
+                    },
+                    {
+                        "id": 53,
+                        "parent": 50,
+                        "name": "beAlpha.queryBy:application",
+                        "start": 1652470882161,
+                        "duration": 262.109,
+                        "children": []
+                    },
+                    {
+                        "id": 54,
+                        "parent": 50,
+                        "name": "FetchHostHealth (site-vca1)",
+                        "start": 1652470882423,
+                        "duration": 0,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": 56,
+                "parent": 3,
+                "name": "aws-eu-2",
+                "start": 1652470881906,
+                "duration": 421.427,
+                "children": [
+                    {
+                        "id": 57,
+                        "parent": 56,
+                        "name": "getSiteClient",
+                        "start": 1652470881906,
+                        "duration": 0.001,
+                        "children": []
+                    },
+                    {
+                        "id": 59,
+                        "parent": 56,
+                        "name": "beAlpha.queryBy:application",
+                        "start": 1652470881906,
+                        "duration": 421.404,
+                        "children": []
+                    },
+                    {
+                        "id": 60,
+                        "parent": 56,
+                        "name": "FetchHostHealth (aws-eu-2)",
+                        "start": 1652470882328,
+                        "duration": 0.012,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": 62,
+                "parent": 3,
+                "name": "site-or1",
+                "start": 1652470881906,
+                "duration": 1103.156,
+                "children": [
+                    {
+                        "id": 63,
+                        "parent": 62,
+                        "name": "getSiteClient",
+                        "start": 1652470881906,
+                        "duration": 246.749,
+                        "children": []
+                    },
+                    {
+                        "id": 65,
+                        "parent": 62,
+                        "name": "beAlpha.queryBy:application",
+                        "start": 1652470882153,
+                        "duration": 196.373,
+                        "children": []
+                    },
+                    {
+                        "id": 66,
+                        "parent": 62,
+                        "name": "fetchHealth (site-or1)",
+                        "start": 1652470882349,
+                        "duration": 253.827,
+                        "children": []
+                    },
+                    {
+                        "id": 67,
+                        "parent": 62,
+                        "name": "FetchHostHealth (site-or1)",
+                        "start": 1652470882603,
+                        "duration": 406.187,
+                        "children": []
+                    },
+                    {
+                        "id": 68,
+                        "parent": 62,
+                        "name": "fetchMemoryUsageStats (site-or1)",
+                        "start": 1652470882603,
+                        "duration": 354.717,
+                        "children": []
+                    },
+                    {
+                        "id": 69,
+                        "parent": 62,
+                        "name": "fetchHealthHostHealth (site-or1)",
+                        "start": 1652470882603,
+                        "duration": 250.357,
+                        "children": []
+                    },
+                    {
+                        "id": 70,
+                        "parent": 62,
+                        "name": "fetchCPUUsageStats (site-or1)",
+                        "start": 1652470882603,
+                        "duration": 405.975,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": 72,
+                "parent": 3,
+                "name": "site-stg1",
+                "start": 1652470881906,
+                "duration": 609.999,
+                "children": [
+                    {
+                        "id": 73,
+                        "parent": 72,
+                        "name": "getSiteClient",
+                        "start": 1652470881906,
+                        "duration": 246.273,
+                        "children": []
+                    },
+                    {
+                        "id": 75,
+                        "parent": 72,
+                        "name": "beAlpha.queryBy:application",
+                        "start": 1652470882153,
+                        "duration": 363.713,
+                        "children": []
+                    },
+                    {
+                        "id": 76,
+                        "parent": 72,
+                        "name": "FetchHostHealth (site-stg1)",
+                        "start": 1652470882516,
+                        "duration": 0.001,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": 78,
+                "parent": 3,
+                "name": "site-wa1",
+                "start": 1652470881906,
+                "duration": 1047.691,
+                "children": [
+                    {
+                        "id": 79,
+                        "parent": 78,
+                        "name": "getSiteClient",
+                        "start": 1652470881906,
+                        "duration": 254.031,
+                        "children": []
+                    },
+                    {
+                        "id": 81,
+                        "parent": 78,
+                        "name": "beAlpha.queryBy:application",
+                        "start": 1652470882161,
+                        "duration": 277.923,
+                        "children": []
+                    },
+                    {
+                        "id": 82,
+                        "parent": 78,
+                        "name": "fetchHealth (site-wa1)",
+                        "start": 1652470882438,
+                        "duration": 229.523,
+                        "children": []
+                    },
+                    {
+                        "id": 83,
+                        "parent": 78,
+                        "name": "FetchHostHealth (site-wa1)",
+                        "start": 1652470882668,
+                        "duration": 286.187,
+                        "children": []
+                    },
+                    {
+                        "id": 84,
+                        "parent": 78,
+                        "name": "fetchMemoryUsageStats (site-wa1)",
+                        "start": 1652470882668,
+                        "duration": 226.119,
+                        "children": []
+                    },
+                    {
+                        "id": 85,
+                        "parent": 78,
+                        "name": "fetchHealthHostHealth (site-wa1)",
+                        "start": 1652470882668,
+                        "duration": 285.874,
+                        "children": []
+                    },
+                    {
+                        "id": 86,
+                        "parent": 78,
+                        "name": "fetchCPUUsageStats (site-wa1)",
+                        "start": 1652470882668,
+                        "duration": 236.398,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": 88,
+                "parent": 3,
+                "name": "dev-site1",
+                "start": 1652470881907,
+                "duration": 520.548,
+                "children": [
+                    {
+                        "id": 89,
+                        "parent": 88,
+                        "name": "getSiteClient",
+                        "start": 1652470881907,
+                        "duration": 253.377,
+                        "children": []
+                    },
+                    {
+                        "id": 91,
+                        "parent": 88,
+                        "name": "beDelta.queryBy:application",
+                        "start": 1652470882160,
+                        "duration": 267.164,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": 93,
+                "parent": 3,
+                "name": "site-ms1",
+                "start": 1652470881907,
+                "duration": 1888.277,
+                "children": [
+                    {
+                        "id": 94,
+                        "parent": 93,
+                        "name": "getSiteClient",
+                        "start": 1652470881907,
+                        "duration": 245.955,
+                        "children": []
+                    },
+                    {
+                        "id": 96,
+                        "parent": 93,
+                        "name": "beAlpha.queryBy:application",
+                        "start": 1652470882153,
+                        "duration": 231.696,
+                        "children": []
+                    },
+                    {
+                        "id": 97,
+                        "parent": 93,
+                        "name": "fetchHealth (site-ms1)",
+                        "start": 1652470882384,
+                        "duration": 247.856,
+                        "children": []
+                    },
+                    {
+                        "id": 98,
+                        "parent": 93,
+                        "name": "FetchHostHealth (site-ms1)",
+                        "start": 1652470882632,
+                        "duration": 1162.704,
+                        "children": []
+                    },
+                    {
+                        "id": 99,
+                        "parent": 93,
+                        "name": "fetchMemoryUsageStats (site-ms1)",
+                        "start": 1652470882632,
+                        "duration": 747.153,
+                        "children": []
+                    },
+                    {
+                        "id": 100,
+                        "parent": 93,
+                        "name": "fetchHealthHostHealth (site-ms1)",
+                        "start": 1652470882633,
+                        "duration": 310.421,
+                        "children": []
+                    },
+                    {
+                        "id": 101,
+                        "parent": 93,
+                        "name": "fetchCPUUsageStats (site-ms1)",
+                        "start": 1652470882633,
+                        "duration": 1162.453,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": 103,
+                "parent": 3,
+                "name": "site-int2",
+                "start": 1652470881907,
+                "duration": 366.499,
+                "children": [
+                    {
+                        "id": 104,
+                        "parent": 103,
+                        "name": "getSiteClient",
+                        "start": 1652470881907,
+                        "duration": 245.413,
+                        "children": []
+                    },
+                    {
+                        "id": 106,
+                        "parent": 103,
+                        "name": "beAlpha.queryBy:application",
+                        "start": 1652470882152,
+                        "duration": 121.031,
+                        "children": []
+                    },
+                    {
+                        "id": 107,
+                        "parent": 103,
+                        "name": "FetchHostHealth (site-int2)",
+                        "start": 1652470882273,
+                        "duration": 0.001,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": 109,
+                "parent": 3,
+                "name": "site-int1",
+                "start": 1652470881907,
+                "duration": 481.759,
+                "children": [
+                    {
+                        "id": 110,
+                        "parent": 109,
+                        "name": "getSiteClient",
+                        "start": 1652470881907,
+                        "duration": 246.176,
+                        "children": []
+                    },
+                    {
+                        "id": 112,
+                        "parent": 109,
+                        "name": "beAlpha.queryBy:application",
+                        "start": 1652470882153,
+                        "duration": 235.572,
+                        "children": []
+                    },
+                    {
+                        "id": 113,
+                        "parent": 109,
+                        "name": "FetchHostHealth (site-int1)",
+                        "start": 1652470882389,
+                        "duration": 0,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": 115,
+                "parent": 3,
+                "name": "aws-control-syd1-1",
+                "start": 1652470881907,
+                "duration": 253.779,
+                "children": [
+                    {
+                        "id": 116,
+                        "parent": 115,
+                        "name": "getSiteClient",
+                        "start": 1652470881907,
+                        "duration": 0.001,
+                        "children": []
+                    },
+                    {
+                        "id": 118,
+                        "parent": 115,
+                        "name": "beAlpha.queryBy:application",
+                        "start": 1652470881907,
+                        "duration": 253.748,
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    }
+]
