@@ -18,7 +18,7 @@ var fakeTimings *timers.TimerSet
 
 func main() {
 	// Grab a new TimerSet
-	fakeTimings = timers.Get(context.Background())
+	fakeTimings = timers.From(context.Background())
 	err := json.Unmarshal(jsonData, fakeTimings)
 	if err != nil {
 		fmt.Printf("Failed to unmarshal timers json: %s\n", err.Error())

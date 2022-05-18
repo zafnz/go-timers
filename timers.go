@@ -34,7 +34,7 @@ type TimerSet struct {
 // interface designed to be quick and easy to instrument functions and code blocks.
 //
 // To get a Timer, you call New from a TimerSet, retrieved from the context:
-//  timer.Get(ctx).New("Blah")
+//  timers.From(ctx).New("Blah")
 type Timer struct {
 	name     string
 	start    time.Time
@@ -55,7 +55,7 @@ type timerctx string
 // do not want a timer at all, use context.Background(), or simply create a TimerSet empty
 // struct that will not be attached to the current context.
 func NewContext(ctx context.Context) context.Context {
-	existingSet := Get(ctx)
+	existingSet := From(ctx)
 	newSet := &TimerSet{}
 	ctx = context.WithValue(ctx, timerctx("timers"), newSet)
 	t := existingSet.New("Subtimer")
@@ -71,7 +71,7 @@ func NewContext(ctx context.Context) context.Context {
 // however the Timers themselves are not. Don't manipulate the same Timer in different go routines
 // at the same time. You're probably doing it wrong if you find yourself wanting to.
 func NewContextWithTimer(ctx context.Context, name string, a ...interface{}) (context.Context, *Timer) {
-	existingSet := Get(ctx)
+	existingSet := From(ctx)
 	newSet := &TimerSet{}
 	ctx = context.WithValue(ctx, timerctx("timers"), newSet)
 	t := existingSet.New(name, a...)
@@ -83,12 +83,12 @@ func NewContextWithTimer(ctx context.Context, name string, a ...interface{}) (co
 // TimerSet that will be garbage collected. This ensures that chaining is always possible.
 //
 // Example:
-//  t := timers.Get(ctx).New("blah")
+//  t := timers.From(ctx).New("blah")
 //
-// Regardless of whether there is a timer set in the current context, you will get back a
+// Regardless of whether there is a TimerSet in the current context, you will get back a
 // working timer you can use.
-func Get(ctx context.Context) *TimerSet {
-	s := GetFromContext(ctx)
+func From(ctx context.Context) *TimerSet {
+	s := SetFromContext(ctx)
 	if s == nil {
 		s = newSet()
 	}
@@ -103,11 +103,11 @@ func newSet() *TimerSet {
 // Get TimerSet from provided context (if any), otherwise return nil.
 //
 // You probably don't want this function. You want to always create a context with a new TimerSet
-// (timers.NewContext()), and just use timers.Get(ctx) to retrieve it -- knowing it's safe because
+// (timers.NewContext()), and just use timers.From(ctx) to retrieve it -- knowing it's safe because
 // if you end up in a context that has no timers it will still give you a working TimerSet.
 // Otherwise what are you going to do if this function returns nil? Create a new context with
 // NewContext()? Then just use NewContext in the first place.
-func GetFromContext(ctx context.Context) *TimerSet {
+func SetFromContext(ctx context.Context) *TimerSet {
 	v := ctx.Value(timerctx("timers"))
 	if v != nil {
 		if t, ok := v.(*TimerSet); ok {

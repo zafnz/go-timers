@@ -70,16 +70,16 @@ func TestRunning(t *testing.T) {
 
 func TestWrap(t *testing.T) {
 	ctx := NewContext(context.Background())
-	Get(ctx).Wrap(ctx, "Wrapped", func(c context.Context) {
+	From(ctx).Wrap(ctx, "Wrapped", func(c context.Context) {
 		if c == ctx {
 			t.Fatal("Identical context given to wrapped function")
 		}
-		if GetFromContext(c) == nil {
+		if SetFromContext(c) == nil {
 			t.Fatal("No TimerSet in new context")
 		}
 		time.Sleep(1 * time.Millisecond)
 	})
-	timer := Get(ctx).Find("Wrapped")
+	timer := From(ctx).Find("Wrapped")
 	if timer == nil {
 		t.Fatal("Wrap didn't create a wrapper timer in parent")
 	}
@@ -92,32 +92,32 @@ func TestWrap(t *testing.T) {
 }
 
 func TestNoContext(t *testing.T) {
-	if Get(context.Background()) == nil {
+	if From(context.Background()) == nil {
 		t.Error("Timers didn't return a TimerSet always")
 	}
 }
 func TestContext(t *testing.T) {
 	ctx := context.Background()
 	ctx = NewContext(ctx)
-	if GetFromContext(ctx) == nil {
+	if SetFromContext(ctx) == nil {
 		t.Error("Failed to get timer in current context")
 	}
-	if GetFromContext(context.Background()) != nil {
+	if SetFromContext(context.Background()) != nil {
 		t.Error("Got a context from the background!?")
 	}
 }
 func TestContextInheritence(t *testing.T) {
 	ctx := NewContext(context.Background())
 
-	Get(ctx).New("Test").Start().nap().Stop()
+	From(ctx).New("Test").Start().nap().Stop()
 	deeperCtx, fn := context.WithCancel(ctx)
-	Get(deeperCtx).New("Deeper").Start().nap().Stop()
+	From(deeperCtx).New("Deeper").Start().nap().Stop()
 	fn()
 
-	if Get(ctx).Find("Test").Duration() < 100*time.Microsecond {
+	if From(ctx).Find("Test").Duration() < 100*time.Microsecond {
 		t.Fatal("Time travel is impossible -- I hope!")
 	}
-	if Get(ctx).Find("Deeper") == nil {
+	if From(ctx).Find("Deeper") == nil {
 		t.Error("Timer lost in creation of new context from existing")
 	}
 }
@@ -258,23 +258,23 @@ func TestSetMarshalling(t *testing.T) {
 
 func TestTreeMarshalling(t *testing.T) {
 	depth0, _ := NewContextWithTimer(context.Background(), "depth0")
-	Get(depth0).New("t0.0").Start().nap().Stop()
+	From(depth0).New("t0.0").Start().nap().Stop()
 	depth1, _ := NewContextWithTimer(depth0, "depth1")
-	Get(depth1).New("t1.0").Start().nap().Stop()
+	From(depth1).New("t1.0").Start().nap().Stop()
 	depth2, _ := NewContextWithTimer(depth1, "depth2")
-	Get(depth2).New("t2.0").Start().nap().Stop()
-	Get(depth2).New("t2.1").Start().nap().Stop()
+	From(depth2).New("t2.0").Start().nap().Stop()
+	From(depth2).New("t2.1").Start().nap().Stop()
 	depth3, _ := NewContextWithTimer(depth2, "depth3")
-	Get(depth3).New("3.0").Start().nap().Stop()
-	Get(depth3).New("3.1").Start().nap().Stop().Tag("tag3.1")
-	t32 := Get(depth3).New("3.2").Start().nap().Stop().Tag("3.2")
+	From(depth3).New("3.0").Start().nap().Stop()
+	From(depth3).New("3.1").Start().nap().Stop().Tag("tag3.1")
+	t32 := From(depth3).New("3.2").Start().nap().Stop().Tag("3.2")
 
 	t.Log("Tree")
-	Get(depth0).Tree(func(timer Timer, depth int, _ *TimerSet) {
+	From(depth0).Tree(func(timer Timer, depth int, _ *TimerSet) {
 		t.Logf("%s %s\n", strings.Repeat(" ", depth), timer.String())
 	})
 
-	bytes, err := json.MarshalIndent(Get(depth0), "", "  ")
+	bytes, err := json.MarshalIndent(From(depth0), "", "  ")
 	if err != nil {
 		t.Fatal(err)
 	}

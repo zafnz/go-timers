@@ -23,11 +23,11 @@ func doWork() {
 }
 
 func apiFunc1(ctx context.Context) {
-	defer timers.Get(ctx).New("apiFunc1").Start().Stop()
+	defer timers.From(ctx).New("apiFunc1").Start().Stop()
 	// Doing work
 	doWork()
 
-	t := timers.Get(ctx).New("Downstream1").Start()
+	t := timers.From(ctx).New("Downstream1").Start()
 	doWork() // Make a call downstream
 	t.Stop()
 	apiFunc1a(ctx)
@@ -35,25 +35,25 @@ func apiFunc1(ctx context.Context) {
 
 }
 func apiFunc1a(ctx context.Context) {
-	defer timers.Get(ctx).New("apiFunc1a").Start().Stop()
+	defer timers.From(ctx).New("apiFunc1a").Start().Stop()
 	// Doing work
 	doWork()
 
-	t := timers.Get(ctx).New("Downstream2").Start()
+	t := timers.From(ctx).New("Downstream2").Start()
 	doWork() // Make a call downstream
 	t.Stop()
 }
 func apiFunc1b(ctx context.Context) {
-	defer timers.Get(ctx).New("apiFunc1b").Start().Stop()
+	defer timers.From(ctx).New("apiFunc1b").Start().Stop()
 	// Doing work
 	doWork()
 
-	t := timers.Get(ctx).New("Downstream3").Start()
+	t := timers.From(ctx).New("Downstream3").Start()
 	doWork() // Make a call downstream
 	t.Stop()
 }
 func apiFunc2(ctx context.Context) {
-	defer timers.Get(ctx).New("apiFunc2").Start().Stop()
+	defer timers.From(ctx).New("apiFunc2").Start().Stop()
 	doWork()
 	apiFunc3(ctx)
 	// Lots of work
@@ -63,23 +63,23 @@ func apiFunc2(ctx context.Context) {
 	apiFunc4(ctx)
 }
 func apiFunc3(ctx context.Context) {
-	defer timers.Get(ctx).New("apiFunc3").Start().Stop()
+	defer timers.From(ctx).New("apiFunc3").Start().Stop()
 	doWork()
 }
 func apiFunc4(ctx context.Context) {
-	defer timers.Get(ctx).New("apiFunc4").Start().Stop()
+	defer timers.From(ctx).New("apiFunc4").Start().Stop()
 	doWork()
 }
 
 func apiSampleEndpoint(w http.ResponseWriter, r *http.Request) {
 
 	doWork()
-	timers.Get(r.Context()).Wrap(r.Context(), "calling apiFunc to do work", func(ctx context.Context) {
+	timers.From(r.Context()).Wrap(r.Context(), "calling apiFunc to do work", func(ctx context.Context) {
 		apiFunc1(ctx)
 	})
 	apiFunc2(r.Context())
 	// Output headers
-	timers.Get(r.Context()).AddHeader(w)
+	timers.From(r.Context()).AddHeader(w)
 	w.WriteHeader(200)
 	// Output body
 	fmt.Fprintf(w, "Request ended")
@@ -92,7 +92,7 @@ func timerMiddleware(next http.Handler) http.Handler {
 		ctx = timers.NewContext(ctx)
 		name := r.URL.Path
 
-		timers.Get(ctx).New(name).Start()
+		timers.From(ctx).New(name).Start()
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
