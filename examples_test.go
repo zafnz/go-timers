@@ -22,7 +22,7 @@ func majorWork(ctx context.Context, wg *sync.WaitGroup) {
 func moreMajorWork(ctx context.Context) {
 	fmt.Println("more major work starting")
 	time.Sleep(time.Duration(rand.Intn(1000) * int(time.Millisecond)))
-	timers.Get(ctx).Wrap(ctx, "subwork", func(ctx context.Context) {
+	timers.From(ctx).Wrap(ctx, "subwork", func(ctx context.Context) {
 		fmt.Println("Subwork going on")
 		time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
 		fmt.Println("subwork finished")
@@ -36,10 +36,10 @@ func Example() {
 
 	// do things
 	func() {
-		defer timers.Get(ctx).New("Measure Sleep").Start().Stop()
+		defer timers.From(ctx).New("Measure Sleep").Start().Stop()
 		time.Sleep(100 * time.Millisecond)
 	}()
-	t := timers.Get(ctx).New("Count to a hundred million")
+	t := timers.From(ctx).New("Count to a hundred million")
 	t.Start()
 	for i := 0; i < 100000000; i++ {
 	}
@@ -56,7 +56,7 @@ func Example() {
 		wg := sync.WaitGroup{}
 		for i := 0; i < 2; i++ {
 			wg.Add(1)
-			go timers.Get(ctx).Wrap(ctx, "majorWork", func(ctx context.Context) {
+			go timers.From(ctx).Wrap(ctx, "majorWork", func(ctx context.Context) {
 				majorWork(ctx, &wg)
 			})
 		}
@@ -70,11 +70,11 @@ func Example() {
 	t.Stop()
 
 	fmt.Println("\nLets see how we did:")
-	for _, t := range timers.Get(ctx).AllDeep() {
+	for _, t := range timers.From(ctx).AllDeep() {
 		fmt.Println(t)
 	}
 	fmt.Println("\n\nAs a tree")
-	timers.Get(ctx).Tree(func(timer timers.Timer, depth int, _ *timers.TimerSet) {
+	timers.From(ctx).Tree(func(timer timers.Timer, depth int, _ *timers.TimerSet) {
 		fmt.Printf("%s %s\n", strings.Repeat(" ", depth), timer.String())
 	})
 
@@ -89,14 +89,14 @@ func ExampleTimerSet_New() {
 	ctx := context.Background()
 	// At the top of the function we put this one line, and the "My Function" timer in
 	// the current ctx now has the duration of this function.
-	defer timers.Get(ctx).New("My function").Start().Stop()
+	defer timers.From(ctx).New("My function").Start().Stop()
 
 	// The New function supports string formatting directives using fmt.Sprintf
-	defer timers.Get(ctx).New("My function(%s, %d)", "Calling Parameter", 5)
+	defer timers.From(ctx).New("My function(%s, %d)", "Calling Parameter", 5)
 }
 func ExampleTimer_Tags() {
 	// Grab a floating timer from the background context, which has no timerset
-	timer := timers.Get(context.Background()).New("MyFunc")
+	timer := timers.From(context.Background()).New("MyFunc")
 	// Assign it a tag and start
 	timer.Tag("Test").Start()
 	fmt.Printf("%s", timer.Tags())
@@ -116,27 +116,27 @@ func ExampleNewContextWithTimer() {
 	t.Start()
 	goDoSomeWork(newCtx)
 	t.Stop()
-	workTimerSet := timers.Get(newCtx)
+	workTimerSet := timers.From(newCtx)
 	fmt.Printf("Work took %d ms and produced %d timers", t.Duration(), len(workTimerSet.All()))
 }
 
 func ExampleTimerSet_Wrap() {
 	ctx := timers.NewContext(context.Background())
-	timers.Get(ctx).New("Stuff").Start().Stop()
-	timers.Get(ctx).Wrap(ctx, "Some Work", func(ctx context.Context) {
-		timers.Get(ctx).New("work step 1").Start().Stop()
-		timers.Get(ctx).New("work step 2").Start().Stop()
-		timers.Get(ctx).New("work step 3").Start().Stop()
+	timers.From(ctx).New("Stuff").Start().Stop()
+	timers.From(ctx).Wrap(ctx, "Some Work", func(ctx context.Context) {
+		timers.From(ctx).New("work step 1").Start().Stop()
+		timers.From(ctx).New("work step 2").Start().Stop()
+		timers.From(ctx).New("work step 3").Start().Stop()
 	})
 
 }
 
 func ExampleTimerSet_MarshalJSON() {
 	ctx := timers.NewContext(context.Background())
-	timers.Get(ctx).New("Timer 1")
-	timers.Get(ctx).New("Timer 1")
-	timers.Get(ctx).New("Timer 1")
-	bytes, _ := json.MarshalIndent(timers.Get(ctx), "", " ")
+	timers.From(ctx).New("Timer 1")
+	timers.From(ctx).New("Timer 1")
+	timers.From(ctx).New("Timer 1")
+	bytes, _ := json.MarshalIndent(timers.From(ctx), "", " ")
 	fmt.Print(string(bytes))
 	// Output:
 	//[
