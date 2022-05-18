@@ -95,6 +95,11 @@ func From(ctx context.Context) *TimerSet {
 	return s
 }
 
+// Deprecated: Use `From` instead, this function will disappear next major version.
+func Get(ctx context.Context) *TimerSet {
+	return From(ctx)
+}
+
 // Internal function to create a new timer from context.Background()
 func newSet() *TimerSet {
 	return &(TimerSet{})
