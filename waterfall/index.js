@@ -66,10 +66,24 @@ function setStatusText(str) {
         statusElm.innerText = str;
 }
 let currentTree;
+let abortFetch;
 function makeWaterfallRequest(method, path, body, type) {
     let init = {
         method: method,
     };
+    if (abortFetch != undefined) {
+        // Abort request in progress
+        abortFetch.abort();
+    }
+    if (abortFetch == undefined) {
+        try {
+            abortFetch = new AbortController();
+            init.signal = abortFetch.signal;
+        }
+        catch (_a) {
+            /* discard */
+        }
+    }
     if (type !== undefined) {
         init.headers = { 'Content-Type': type };
     }
@@ -80,6 +94,11 @@ function makeWaterfallRequest(method, path, body, type) {
     currentTree = undefined;
     setStatusText('Making request...');
     fetch(path, init).then((r) => {
+        abortFetch = undefined;
+        if (r.status > 299 || r.status < 200) {
+            setStatusText(`Server returned ${r.status}`);
+            return;
+        }
         const timingHeader = r.headers.get('Server-Timing');
         if (!timingHeader) {
             setStatusText('No Server-Timing headers in response');
@@ -88,7 +107,10 @@ function makeWaterfallRequest(method, path, body, type) {
         setStatusText('');
         renderTimingsFromHeader(timingHeader);
     }).catch((e) => {
-        setStatusText(`Failed to make request: ${e}`);
+        abortFetch = undefined;
+        if (e.name !== "AbortError") {
+            setStatusText(`Failed to make request: ${e.message}`);
+        }
     });
 }
 function splitHeader(header) {

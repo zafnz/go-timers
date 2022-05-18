@@ -1,5 +1,5 @@
 
-function el(id: string) : HTMLElement{
+function el(id: string): HTMLElement {
     return document.getElementById(id)
 }
 
@@ -45,21 +45,21 @@ function onLoad() {
     })
 }
 
-function setLocationQueryParam(param:string, value:string) {
+function setLocationQueryParam(param: string, value: string) {
     let url = new URL(document.location.toString())
     url.searchParams.set(param, value)
-    window.history.replaceState({path:url.toString()},'',url.toString());
+    window.history.replaceState({ path: url.toString() }, '', url.toString());
 }
-function clearLocationQueryParam(param:string) {
+function clearLocationQueryParam(param: string) {
     let url = new URL(document.location.toString())
     url.searchParams.delete(param)
-    window.history.replaceState({path:url.toString()},'',url.toString());
+    window.history.replaceState({ path: url.toString() }, '', url.toString());
 }
 
 function waterfallRequestSubmit() {
     const method = (el('waterfall-request-method') as HTMLSelectElement)?.value
-    const path = (el('waterfall-request-url') as HTMLInputElement)?.value 
-    const bodyTxt = (el('waterfall-request-body') as HTMLTextAreaElement)?.value 
+    const path = (el('waterfall-request-url') as HTMLInputElement)?.value
+    const bodyTxt = (el('waterfall-request-body') as HTMLTextAreaElement)?.value
     let contentType = (el('waterfall-body-type') as HTMLSelectElement).value
     setLocationQueryParam("url", path)
     makeWaterfallRequest(method, path, bodyTxt, contentType)
@@ -71,36 +71,54 @@ function setStatusText(str: string) {
 }
 
 interface Timer {
-    id?:number 
-    name:string 
-    start:number 
-    duration:number
-    parent?:number
-    children:Array<Timer>
+    id?: number
+    name: string
+    start: number
+    duration: number
+    parent?: number
+    children: Array<Timer>
 }
 interface Tree {
-    nodes:Array<Timer>
-    start:number
-    end:number
+    nodes: Array<Timer>
+    start: number
+    end: number
 }
 
-let currentTree:Tree 
+let currentTree: Tree
+let abortFetch: AbortController
 
-function makeWaterfallRequest(method: string, path: string, body?:string, type?:string) {
+function makeWaterfallRequest(method: string, path: string, body?: string, type?: string) {
     let init: RequestInit = {
         method: method,
-        
     }
+    if (abortFetch != undefined) {
+        // Abort request in progress
+        abortFetch.abort()
+    }
+    if (abortFetch == undefined) {
+        try {
+            abortFetch = new AbortController()
+            init.signal = abortFetch.signal
+        } catch {
+            /* discard */
+        }
+    }
+
     if (type !== undefined) {
-        init.headers = {'Content-Type': type}
+        init.headers = { 'Content-Type': type }
     }
     if (method != "GET" && method != "HEAD" && body !== undefined) {
-        init.body = body 
+        init.body = body
     }
     emptyTimingsTable()
     currentTree = undefined
     setStatusText('Making request...')
     fetch(path, init).then((r: Response) => {
+        abortFetch = undefined
+        if (r.status > 299 || r.status < 200) {
+            setStatusText(`Server returned ${r.status}`)
+            return
+        }
         const timingHeader = r.headers.get('Server-Timing')
         if (!timingHeader) {
             setStatusText('No Server-Timing headers in response')
@@ -108,33 +126,36 @@ function makeWaterfallRequest(method: string, path: string, body?:string, type?:
         }
         setStatusText('')
         renderTimingsFromHeader(timingHeader)
-    }).catch((e: any) => {
-        setStatusText(`Failed to make request: ${e}`)
+    }).catch((e: DOMException) => {
+        abortFetch = undefined
+        if (e.name !== "AbortError") {
+            setStatusText(`Failed to make request: ${e.message}`)
+        }
     })
-} 
-function splitHeader(header: string):Array<string> {
-    let inQuote = false 
+}
+function splitHeader(header: string): Array<string> {
+    let inQuote = false
     let start = 0
     let timers: Array<string> = []
-    for(let i = 0; i < header.length; i++) {
+    for (let i = 0; i < header.length; i++) {
         if (header[i] == '"') {
-            inQuote = inQuote ? false : true 
+            inQuote = inQuote ? false : true
         } else if (header[i] == ',' && !inQuote) {
-            timers.push(header.substring(start,i).trim())
-            start = i+2
+            timers.push(header.substring(start, i).trim())
+            start = i + 2
         }
     }
     return timers
 }
-function headerTimingToTree(header: string):Tree {
+function headerTimingToTree(header: string): Tree {
     const timers = splitHeader(header)
     const re = new RegExp('([^;=]*)=("([^"]*)"|[^";]*)|([^=;]+);', 'g')
-    let position: {[key:number]:Timer} = {}
-    let startTime:number;
-    let endTime:number;
-    for(let timerStr of timers) {
+    let position: { [key: number]: Timer } = {}
+    let startTime: number;
+    let endTime: number;
+    for (let timerStr of timers) {
         timerStr = timerStr + ';'
-        let timer = {children:[]}
+        let timer = { children: [] }
         let match
         while ((match = re.exec(timerStr)) !== null) {
             let val
@@ -148,7 +169,7 @@ function headerTimingToTree(header: string):Tree {
             }
             timer[name] = val
         }
-        let t:Timer = {
+        let t: Timer = {
             id: timer['id'] !== undefined ? parseInt(timer['id']) : undefined,
             parent: timer['parent'] !== undefined ? parseInt(timer['parent']) : undefined,
             name: timer['descr'],
@@ -168,9 +189,9 @@ function headerTimingToTree(header: string):Tree {
         }
     }
 
-    let root:Array<Timer> = []
+    let root: Array<Timer> = []
     let timer: any
-    for(timer of Object.values(position)) {
+    for (timer of Object.values(position)) {
         if (timer.id === undefined || timer.parent === undefined) {
             root.push(timer)
         } else if (position[timer.parent] === undefined) {
@@ -179,18 +200,18 @@ function headerTimingToTree(header: string):Tree {
             position[timer.parent].children.push(timer)
         }
     }
-    for(timer of Object.values(position)) {
+    for (timer of Object.values(position)) {
         if (timer.children.length > 0) {
-            timer.children.sort((a,b) => {
-                if (a.start != b.start) return a.start - b.start 
+            timer.children.sort((a, b) => {
+                if (a.start != b.start) return a.start - b.start
                 return a.dur - b.dur
             })
         }
     }
     //console.log(root)
-    let tree:Tree = {
+    let tree: Tree = {
         nodes: root,
-        start: startTime, 
+        start: startTime,
         end: endTime,
     }
     return tree
@@ -199,29 +220,29 @@ function renderTimingsFromHeader(header: string) {
     const tree = headerTimingToTree(header)
     currentTree = tree
     emptyTimingsTable()
-    renderTree(tree,0)
+    renderTree(tree, 0)
 }
 function emptyTimingsTable() {
     const tBodyElm = el('waterfall-table-body')
-    while(tBodyElm.firstChild) tBodyElm.removeChild(tBodyElm.firstChild)
+    while (tBodyElm.firstChild) tBodyElm.removeChild(tBodyElm.firstChild)
 }
 
 
 function renderTree(tree: Tree, depth: number) {
     const tBodyElm = el('waterfall-table-body')
-    for(const node of tree.nodes) {
+    for (const node of tree.nodes) {
         const rowElm = buildTableRow(node, depth, tree.start, tree.end)
         tBodyElm.appendChild(rowElm)
 
         renderTree({
-            nodes:node.children,
-            start:tree.start,
-            end:tree.end
-        }, depth+1)
+            nodes: node.children,
+            start: tree.start,
+            end: tree.end
+        }, depth + 1)
     }
 }
 
-function buildTableRow(node: Timer, depth:number, start:number, end:number): HTMLTableRowElement {
+function buildTableRow(node: Timer, depth: number, start: number, end: number): HTMLTableRowElement {
     const rowElm = document.createElement('tr') as HTMLTableRowElement
     const nameCellElm = document.createElement('td')
     const timingElm = document.createElement('td')
@@ -232,7 +253,7 @@ function buildTableRow(node: Timer, depth:number, start:number, end:number): HTM
     barElm.className = "waterfall-timer-bar"
     nameElm.className = "waterfall-timer-name"
 
-    for(let i = 0; i < depth; i++) {
+    for (let i = 0; i < depth; i++) {
         const indentElm = document.createElement('span')
         indentElm.innerHTML = "&nbsp;"
         indentElm.className = "waterfall-indent"
@@ -240,16 +261,16 @@ function buildTableRow(node: Timer, depth:number, start:number, end:number): HTM
     }
     nameElm.innerText = node.name
     nameCellElm.appendChild(nameElm)
-    
-    const totalDuration = end-start
+
+    const totalDuration = end - start
     const percentWidth = Math.round((node.duration / totalDuration) * 100)
     const percentOffset = Math.round(((node.start - start) / totalDuration) * 100)
     barElm.style.left = `${percentOffset}%`
     barElm.style.width = `${percentWidth}%`
-    barElm.innerText = `${Math.round(node.duration * 10)/10 }ms`
+    barElm.innerText = `${Math.round(node.duration * 10) / 10}ms`
 
     if (angryColors) {
-        barElm.style.backgroundImage = `linear-gradient(hsl(${100-percentWidth}, 60%, 60%), hsl(${100-percentWidth}, 60%, 40%))`
+        barElm.style.backgroundImage = `linear-gradient(hsl(${100 - percentWidth}, 60%, 60%), hsl(${100 - percentWidth}, 60%, 40%))`
     }
 
     timingElm.appendChild(barElm)
