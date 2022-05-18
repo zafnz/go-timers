@@ -118,8 +118,7 @@ func ExampleTimer_Measure() {
 	})
 	ms := timers.From(ctx).Find("apiCall").Milliseconds()
 	fmt.Println(math.Floor(ms))
-	// Output:
-	// 10
+	// Would print "10", except if time.Sleep() takes longer
 }
 
 func goDoSomeWork(_ context.Context) {

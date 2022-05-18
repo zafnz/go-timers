@@ -47,16 +47,29 @@ the Server-Timings header and waterfall display.
 
 ### http headers
 <img align="right" src="waterfall.png" alt="waterfall example" width="300"/>
-Coming real soon is a full middleware, but available now is TimerSet.AddHeader(http.ResponseWriter) which
-adds the <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Server-Timing">Server-Timing header</a>.
+The Middleware function registers a http handler that adds a TimerSet to the request context, and writes
+the <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Server-Timing">Server-Timing header</a>. 
 
 Once a Server-Timing header is set, you can view the timings either using the in browser inspector, or you
 can use the go-timers built-in waterfall display.
 
+```
+mux := http.NewServeMux()
+mux.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
+    defer timers.From(r.Context()).New("Api Function").Start().Stop()
+    // Do stuff.
+    fmt.Fprintf(w, "Results of stuff")
+})
+// Add the waterfall handler too.
+// Note the trailing slashes are important!
+mux.Handle("/waterfall/", http.StripPrefix("/waterfall/", timers.WaterfallHandler()))
+handler := timers.Middleware(mux, timers.MiddlewareOptions{})
+http.ListenAndServe("127.0.0.1:3000", handler)
+```
+
 ### Waterfall
 By calling `timers.WaterfallHandler()` you get a http Handler that will render a waterfall of calls to your
 web process. See the `examples/waterfall` directory for a very simple example. 
-
 
 ## Grouping/children
 Timers can be grouped by deriving a new context.
