@@ -318,3 +318,12 @@ func TestTreeMarshalling(t *testing.T) {
 	}
 	t.Error("Did not discover timer 3.1")
 }
+
+func TestGlobalNew(t *testing.T) {
+	timer := New("blah")
+	timer.Start().Stop()
+	timer = GlobalTimers.Find("blah")
+	if timer == nil {
+		t.Error("New() failed to create timer in GlobalTimers construct")
+	}
+}

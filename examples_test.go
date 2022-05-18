@@ -174,3 +174,12 @@ func ExampleTimerSet_MarshalJSON() {
 	//  }
 	// ]
 }
+
+func ExampleNew() {
+	defer timers.New("Example").Start().Stop()
+	// ... Do some work...
+	timer := timers.GlobalTimers.Find("Example")
+	fmt.Println(timer)
+	// Output:
+	// Example: Running
+}

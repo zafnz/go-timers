@@ -102,3 +102,16 @@ func MyFunc(ctx context.Context) {
 TimerSets are thread (go routine) safe, but Timers are not. Do not pass a Timer to another go routine, instead
 pass the ctx and let it create it's own. 
 
+## Global timers and CLI
+
+If you have a desire to have global timers, perhaps you are writing a CLI application or something that isn't
+request driven, then the timers package exposes `timers.GlobalTimers` and a convienance function `timers.New`.
+The `timers.New(...)` is a wrapper for `timers.GlobalTimers.New(...)`. As is the case with other TimerSets,
+GlobalTimers is threadsafe, but the individual timers are not. 
+
+The author cannot fathom what particular use there may be for using timers like this without using a context,
+but if you have one, please let me know. 
+
+As for making use of these GlobalTimers, since they are simply a global TimerSet, any of the functions such as
+All() and Tree() will work. Perhaps at the end of main() you'd print all the timers for debugging purposes.
+In which case calling `timers.GlobalTimers.String()` would probably be useful.

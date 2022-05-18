@@ -49,6 +49,8 @@ type Timer struct {
 
 type timerctx string
 
+var GlobalTimers *TimerSet = &TimerSet{}
+
 // Returns a context containing a new TimerSet. If the existing supplied context includes a
 // TimerSet, then a timer is added to that with the name "Subtimer" to keep the timer tree.
 // If you want to control the name of the parent timer, use NewContextWithTimer, if you
@@ -206,6 +208,15 @@ func (s *TimerSet) Wrap(ctx context.Context, name string, fn func(context.Contex
 	t.Stop()
 }
 
+func (s *TimerSet) String() string {
+	timers := s.AllDeep()
+	var str []string
+	for _, t := range timers {
+		str = append(str, t.String())
+	}
+	return strings.Join(str, "\n")
+}
+
 // Create a new timer with the provided name.
 // Name is a format string (like Printf)
 func (s *TimerSet) New(name string, a ...interface{}) *Timer {
@@ -216,6 +227,20 @@ func (s *TimerSet) New(name string, a ...interface{}) *Timer {
 	s.mu.Lock()
 	s.timers = append(s.timers, &timer)
 	s.mu.Unlock()
+	return &timer
+}
+
+// Create a new global timer with the provided name.
+// Name is a format string (like Printf)
+// This is a convienance function for timers.GlobalTimers.New(...)
+func New(name string, a ...interface{}) *Timer {
+	name = fmt.Sprintf(name, a...)
+	timer := Timer{
+		name: name,
+	}
+	GlobalTimers.mu.Lock()
+	GlobalTimers.timers = append(GlobalTimers.timers, &timer)
+	GlobalTimers.mu.Unlock()
 	return &timer
 }
 
