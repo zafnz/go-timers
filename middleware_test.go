@@ -10,6 +10,18 @@ import (
 	"github.com/zafnz/go-timers"
 )
 
+func ExampleMiddleware() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
+		defer timers.From(r.Context()).New("Api Function").Start().Stop()
+	})
+	// Add the waterfall handler too.
+	// Note the trailing slashes are important!
+	mux.Handle("/waterfall/", http.StripPrefix("/waterfall/", timers.WaterfallHandler()))
+	handler := timers.Middleware(mux, timers.MiddlewareOptions{})
+	http.ListenAndServe("127.0.0.1:3000", handler)
+}
+
 func TestMiddleware(t *testing.T) {
 	rr := httptest.NewRecorder()
 

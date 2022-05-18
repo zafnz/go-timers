@@ -15,7 +15,8 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api", apiSampleEndpoint)
 	mux.Handle("/waterfall/", http.StripPrefix("/waterfall/", timers.WaterfallHandler()))
-	log.Fatal(http.ListenAndServe("127.0.0.1:3000", timerMiddleware(mux)))
+	handler := timers.Middleware(mux, timers.MiddlewareOptions{})
+	log.Fatal(http.ListenAndServe("127.0.0.1:3000", handler))
 }
 
 func doWork() {
@@ -84,15 +85,4 @@ func apiSampleEndpoint(w http.ResponseWriter, r *http.Request) {
 	// Output body
 	fmt.Fprintf(w, "Request ended")
 
-}
-
-func timerMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		ctx = timers.NewContext(ctx)
-		name := r.URL.Path
-
-		timers.From(ctx).New(name).Start()
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
 }
