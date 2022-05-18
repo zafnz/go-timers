@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-//go:embed waterfall waterfall/index.html
+//go:embed waterfall/index.html waterfall/index.js
 var content embed.FS
 
 // Returns a http.Handler that will serve the waterfall inspector suitable for
