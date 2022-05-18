@@ -19,12 +19,12 @@ it yourself, but that's not the idea.
 ## Chaining and defer
 Timers can be chained, which provides a very nice interaction.
 ```
-t := timers.Set(ctx).New("My New Timer").Tag("mine").Start()
+t := timers.From(ctx).New("My New Timer").Tag("mine").Start()
 ```
 Due to the chaining they can be used to measure an entire function with just one line:
 ```
 func MyFunction(ctx context.Context, args...) {
-    defer timers.Set(ctx).New("MyFunction").Start().Stop()
+    defer timers.From(ctx).New("MyFunction").Start().Stop()
     ...
 }
 ```
@@ -35,8 +35,8 @@ Timers can be grouped by deriving a new context.
 ```
 func MyFunc(ctx context.Context) {
     newCtx, _ := timers.NewContextWithTimer(ctx, "A new group of timers that are under the previous ctx")  
-    timers.Set(newCtx).New("Timer1")
-    timers.Set(newCtx).New("Timer2")
+    timers.From(newCtx).New("Timer1")
+    timers.From(newCtx).New("Timer2")
 }
 ```
 
@@ -46,11 +46,11 @@ func MyFunc(ctx context.Context) {
     ...
     // You have to provide the ctx to the Wrap function as the TimerSet itself
     // does not hold the context to avoid leaking it. 
-    timers.Set(ctx).Wrap(ctx, "A library call", func(ctx context.Context) {
+    timers.From(ctx).Wrap(ctx, "A library call", func(ctx context.Context) {
         MakeSomeCall(ctx, ...)
     })
     // All timers that MakeSomeCall() created are under "A library call" timer. 
-    for _, t := range timers.Set(ctx).Find("A library call").Children {
+    for _, t := range timers.From(ctx).Find("A library call").Children {
       fmt.Println(t) // Prints all the timers that were created.
     }
 }
