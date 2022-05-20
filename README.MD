@@ -105,7 +105,7 @@ pass the ctx and let it create it's own.
 ## Global timers and CLI
 
 If you have a desire to have global timers, perhaps you are writing a CLI application or something that isn't
-request driven, then the timers package exposes `timers.GlobalTimers` and a convienance function `timers.New`.
+request driven, then the timers package exposes `timers.GlobalTimers` and a convenience function `timers.New`.
 The `timers.New(...)` is a wrapper for `timers.GlobalTimers.New(...)`. As is the case with other TimerSets,
 GlobalTimers is threadsafe, but the individual timers are not. 
 

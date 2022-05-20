@@ -7,7 +7,7 @@ in production systems, this code is designed to be lightweight and produce usefu
 output.
 
 It's original purpose was to aid in providing latency timings for downstream API
-calls for an API service. With strategic timers placed around and use of middleware
+calls for an API service. With the use strategic timers placed around
 performance timers for services can be provided. */
 package timers
 
@@ -257,14 +257,38 @@ func (s *TimerSet) Find(name string) *Timer {
 	return nil
 }
 
-// Starts the timer.
+// Stops all timers from running, including any child timersets
+// Note: This function locks the entire tree during it's operation
+func (s *TimerSet) StopAllTimers() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, t := range s.timers {
+		if t.duration == 0 && !t.start.IsZero() {
+			t.Stop()
+		}
+		if t.subtimer != nil {
+			t.subtimer.StopAllTimers()
+		}
+	}
+}
+
+// Starts the timer. If the timer had already been started this function does nothing
 func (t *Timer) Start() *Timer {
+	if !t.start.IsZero() {
+		return t
+	}
 	t.start = time.Now()
 	return t
 }
 
-// Stops the timer
+// Stops the timer. If the timer has not started or has already been stopped then
+// this function does nothing.
 func (t *Timer) Stop() *Timer {
+	if t.start.IsZero() { // Don't stop if not running
+		return t
+	} else if t.duration != 0 { // Don't stop if was running but already stopped
+		return t
+	}
 	t.duration = time.Since(t.start)
 	return t
 }

@@ -9,6 +9,7 @@ import (
 type MiddlewareOptions struct {
 	Callback       func(*TimerSet) // This function will be called at the end of the request
 	NoDefaultTimer bool            // If true, then no default timer will be set.
+	StopAllTimers  bool            // Stop all timers before adding them to the Server-Timing header
 }
 
 // The middleware function sets up timers for each request, and for each request emits
@@ -38,6 +39,7 @@ func Middleware(next http.Handler, opts MiddlewareOptions) http.Handler {
 				return func(code int) {
 					headerAdded = true
 					t.Stop()
+					From(ctx).StopAllTimers()
 					From(ctx).AddHeader(w)
 					original(code)
 				}
@@ -46,6 +48,7 @@ func Middleware(next http.Handler, opts MiddlewareOptions) http.Handler {
 				return func(b []byte) (int, error) {
 					headerAdded = true
 					t.Stop()
+					From(ctx).StopAllTimers()
 					From(ctx).AddHeader(w)
 					return original(b)
 				}
@@ -55,6 +58,7 @@ func Middleware(next http.Handler, opts MiddlewareOptions) http.Handler {
 		next.ServeHTTP(w, r)
 		if !headerAdded {
 			t.Stop()
+			From(ctx).StopAllTimers()
 			From(ctx).AddHeader(w)
 		}
 		if opts.Callback != nil {

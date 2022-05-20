@@ -91,6 +91,26 @@ func TestWrap(t *testing.T) {
 	}
 }
 
+func TestStopStart(t *testing.T) {
+	timer := Timer{name: "Test"}
+	timer.Stop()
+	if timer.duration != 0 {
+		t.Error("Unstarted timer was stopped and has non zero duration")
+	}
+	timer.Start()
+	start := timer.start
+	timer.Start()
+	if timer.start != start {
+		t.Error("Starting timer twice results in change of start time")
+	}
+	timer.Stop()
+	d := timer.duration
+	timer.Stop()
+	if d != timer.duration {
+		t.Error("Stopping timer twice changes the duration")
+	}
+}
+
 func TestNoContext(t *testing.T) {
 	if From(context.Background()) == nil {
 		t.Error("Timers didn't return a TimerSet always")
