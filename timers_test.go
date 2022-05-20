@@ -99,15 +99,17 @@ func TestStopStart(t *testing.T) {
 	}
 	timer.Start()
 	start := timer.start
+	time.Sleep(10 * time.Microsecond)
 	timer.Start()
 	if timer.start != start {
 		t.Error("Starting timer twice results in change of start time")
 	}
 	timer.Stop()
 	d := timer.duration
+	time.Sleep(10 * time.Microsecond)
 	timer.Stop()
 	if d != timer.duration {
-		t.Error("Stopping timer twice changes the duration")
+		t.Errorf("Stopping timer twice changes the duration: %d vs %d", d, timer.duration)
 	}
 }
 
