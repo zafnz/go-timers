@@ -45,6 +45,8 @@ all the context timers or all the context timers and their children respectively
 as a tree using timers.From(ctx).Tree(callback), or -- if you are writting a web server -- you can use
 the Server-Timings header and waterfall display.
 
+Example response! [A very simple fake API with server timings header](https://ovm3l6ntfnnygl2mvv3t5hpq740dnarj.lambda-url.us-west-1.on.aws/f?url=%2Fapi&angry-colors=true)
+
 ### http headers
 <img align="right" src="waterfall.png" alt="waterfall example" width="300"/>
 The Middleware function registers a http handler that adds a TimerSet to the request context, and writes
